@@ -1,0 +1,66 @@
+plugins {
+    id 'groovy'
+    id 'java'
+    id 'io.freefair.lombok' version '6.4.1'
+}
+
+test {
+    testLogging {
+        events 'passed', 'skipped', 'failed'
+
+        showExceptions true
+        exceptionFormat 'full'
+        showCauses true
+        showStackTraces true
+
+        showStandardStreams false
+    }
+}
+
+group 'es.sralloza'
+version '1.3.0'
+def mainClassName = 'Main'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.scilab.forge:jlatexmath:1.0.7'
+
+    // Utils
+    implementation 'org.projectlombok:lombok:1.18.24'
+    implementation 'com.google.inject:guice:5.1.0'
+    implementation 'com.typesafe:config:1.4.2'
+
+    // Json encoding
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.13.3'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.13.3'
+
+    // Telegram
+    implementation 'org.telegram:telegrambots:6.1.0'
+    implementation 'org.telegram:telegrambots-abilities:6.1.0'
+
+    // Logging
+    implementation 'org.slf4j:slf4j-api:1.7.36'
+    implementation 'com.tersesystems.logback:logback-classic:1.0.3'
+    implementation 'com.tersesystems.logback:logback-structured-config:1.0.3'
+    implementation 'com.tersesystems.logback:logback-typesafe-config:1.0.3'
+    implementation 'net.logstash.logback:logstash-logback-encoder:7.2'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+task fatJar(type: Jar) {
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
+    exclude 'META-INF/*.RSA', 'META-INF/*.SF', 'META-INF/*.DSA'
+
+    manifest {
+        attributes 'Main-Class': "${mainClassName}"
+    }
+
+    from { configurations.compileClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+}
