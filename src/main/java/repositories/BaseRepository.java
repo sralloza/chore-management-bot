@@ -7,6 +7,7 @@ import config.ConfigRepository;
 import exceptions.APIException;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
+import security.Security;
 
 import javax.annotation.Nullable;
 import java.net.URI;
@@ -25,29 +26,35 @@ public class BaseRepository {
     private final String baseURL;
     private final String apiToken;
     private final boolean http2;
+    private final Security security;
 
-    public BaseRepository(String baseURL, String apiToken, ConfigRepository config) {
+    public BaseRepository(String baseURL, String apiToken,
+                          ConfigRepository config, Security security) {
         this.baseURL = baseURL;
         this.apiToken = apiToken;
         this.http2 = config.getBoolean("api.http2");
+        this.security = security;
     }
 
     private HttpClient.Version getHttpClientVersion() {
         return http2 ? HttpClient.Version.HTTP_2 : HttpClient.Version.HTTP_1_1;
     }
-    protected <T> CompletableFuture<T> sendRequest(String path, Class<T> clazz) {
-        return sendRequest("GET", path, clazz, null);
-    }
 
-    protected <T> CompletableFuture<T> sendRequest(String path, Class<T> clazz, @Nullable String token) {
+    protected <T> CompletableFuture<T> sendGetRequest(String path, Class<T> clazz, Long tenantId) {
+        String token = security.getTenantToken(tenantId);
         return sendRequest("GET", path, clazz, token);
     }
 
-    protected <T> CompletableFuture<T> sendRequest(String method, String path, Class<T> clazz) {
-        return sendRequest(method, path, clazz, null);
+    protected <T> CompletableFuture<T> sendPostRequest(String path, Class<T> clazz, Long tenantId) {
+        String token = security.getTenantToken(tenantId);
+        return sendRequest("POST", path, clazz, token);
     }
 
-    protected <T> CompletableFuture<T> sendRequest(String method, String path, Class<T> clazz, @Nullable String token) {
+    protected <T> CompletableFuture<T> sendGetRequestAdmin(String path, Class<T> clazz) {
+        return sendRequest("GET", path, clazz, apiToken);
+    }
+
+    private <T> CompletableFuture<T> sendRequest(String method, String path, Class<T> clazz, @Nullable String token) {
         HttpClient client = HttpClient.newHttpClient();
         HttpClient.Version version = getHttpClientVersion();
         log.debug("Using {}", version);
@@ -60,9 +67,6 @@ public class BaseRepository {
 
         Map<String, String> headers = new HashMap<>();
         if (token != null) {
-            if (token.equalsIgnoreCase("admin")) {
-                token = apiToken;
-            }
             headers.put("x-token", token);
         }
 

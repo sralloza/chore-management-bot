@@ -37,3 +37,9 @@ def reset_databases():
     with open_database(commit=True) as cursor:
         for db in DATABASES:
             cursor.execute(f"DELETE FROM {db}")
+
+
+def execute_query(query: str, data, commit: bool = False):
+    with open_database(commit=commit) as cursor:
+        cursor.execute(query, data)
+        return cursor.fetchall()

@@ -47,7 +47,6 @@ public class ChoreManagementBot extends BaseChoreManagementBot {
 
     private final Long creatorId;
     private final Keyboards keyboards;
-    private final Integer tenantId = 1;
 
     @Getter
     private Integer menuMessage;
@@ -105,7 +104,7 @@ public class ChoreManagementBot extends BaseChoreManagementBot {
                 // TODO: set privacy to PUBLIC with manual check
                 var weekId = ctx.update().getMessage().getText().split(getCommandRegexSplit())[1];
                 try {
-                    service.createWeeklyChores(weekId).get();
+                    service.createWeeklyChores(ctx.chatId(), weekId).get();
                     sendMessage("Weekly chores created for week " + weekId, ctx.chatId(), false);
                 } catch (Exception e) {
                     handleException(e, ctx.chatId());
@@ -118,7 +117,7 @@ public class ChoreManagementBot extends BaseChoreManagementBot {
     public void startCompleteTaskFlow(MessageContext ctx) {
         SimpleChoreList tasks;
         try {
-            tasks = service.getSimpleTasks(tenantId).get();
+            tasks = service.getSimpleTasks(ctx.chatId()).get();
         } catch (Exception e) {
             handleException(e, ctx.chatId());
             return;
@@ -170,7 +169,7 @@ public class ChoreManagementBot extends BaseChoreManagementBot {
 
         switch (userMessage) {
             case TICKETS:
-                service.getTickets()
+                service.getTickets(chatId)
                     .thenAccept(tickets -> sendTable(tickets,
                         Normalizers::normalizeTickets,
                         chatId,
@@ -178,7 +177,7 @@ public class ChoreManagementBot extends BaseChoreManagementBot {
                         NO_TICKETS_FOUND));
                 break;
             case TASKS:
-                service.getWeeklyTasks()
+                service.getWeeklyTasks(chatId)
                     .thenAccept(tasks -> sendTable(tasks,
                         Normalizers::normalizeWeeklyChores,
                         chatId,
@@ -207,7 +206,7 @@ public class ChoreManagementBot extends BaseChoreManagementBot {
         switch (replyMsg) {
             case ASK_FOR_WEEK_TO_SKIP:
                 try {
-                    service.skipWeek(tenantId, userMessage).get();
+                    service.skipWeek(ctx.chatId(), userMessage).get();
                 } catch (Exception e) {
                     handleException(e, ctx.chatId());
                     return;
@@ -216,7 +215,7 @@ public class ChoreManagementBot extends BaseChoreManagementBot {
                 break;
             case ASK_FOR_WEEK_TO_UNSKIP:
                 try {
-                    service.unskipWeek(tenantId, userMessage).get();
+                    service.unskipWeek(ctx.chatId(), userMessage).get();
                 } catch (Exception e) {
                     handleException(e, ctx.chatId());
                     return;
@@ -236,7 +235,7 @@ public class ChoreManagementBot extends BaseChoreManagementBot {
         String[] dataParts = data.split(SEPARATOR);
         switch (dataParts[0]) {
             case "COMPLETE_TASK":
-                service.completeTask(dataParts[1], 1, dataParts[2])
+                service.completeTask(ctx.chatId(), dataParts[1], dataParts[2])
                     .thenAccept(unused -> sendMessage(Messages.TASK_COMPLETED, ctx.chatId(), false));
                 break;
             case "SKIP":
