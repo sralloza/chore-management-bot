@@ -1,7 +1,5 @@
 package repositories;
 
-import com.google.inject.Inject;
-import config.ConfigRepository;
 import models.SimpleChoreList;
 import models.TenantList;
 import models.TicketList;
@@ -10,42 +8,20 @@ import models.WeeklyChoresList;
 
 import java.util.concurrent.CompletableFuture;
 
-public class ChoreManagementRepository extends BaseRepository {
-    @Inject
-    public ChoreManagementRepository(ConfigRepository config) {
-        super(config.getString("api.baseURL"), config.getString("api.token"), config);
-    }
+public interface ChoreManagementRepository {
+    CompletableFuture<TicketList> getTickets(Long tenantId);
 
-    public CompletableFuture<TicketList> getTickets() {
-        return sendRequest("/v1/tickets", TicketList.class, "admin");
-    }
+    CompletableFuture<WeeklyChoresList> getTasks(Long tenantId);
 
-    public CompletableFuture<WeeklyChoresList> getTasks() {
-        return sendRequest("/v1/weekly-chores?missing_only=true", WeeklyChoresList.class, "admin");
-    }
+    CompletableFuture<Void> completeTask(Long tenantId, String weekId, String choreType);
 
-    public CompletableFuture<Void> completeTask(String weekId, Integer tenantId, String choreType) {
-        String path = "/v1/weekly-chores/" + weekId + "/tenant/" + tenantId + "/choreType/" + choreType + "/complete";
-        return sendRequest("POST", path, null, "admin");
-    }
+    CompletableFuture<SimpleChoreList> getSimpleTasks(Long tenantId);
 
-    public CompletableFuture<SimpleChoreList> getSimpleTasks(Integer tenantId) {
-        return sendRequest("/v1/simple-chores?missing_only=true&tenant_id=" + tenantId, SimpleChoreList.class, "admin");
-    }
+    CompletableFuture<Void> skipWeek(Long tenantId, String weekId);
 
-    public CompletableFuture<Void> skipWeek(Integer tenantId, String weekId) {
-        return sendRequest("POST", "/v1/tenants/" + tenantId + "/skip/" + weekId, null, "admin");
-    }
+    CompletableFuture<Void> unskipWeek(Long tenantId, String weekId);
 
-    public CompletableFuture<Void> unskipWeek(Integer tenantId, String weekId) {
-        return sendRequest("POST", "/v1/tenants/" + tenantId + "/unskip/" + weekId, null, "admin");
-    }
+    CompletableFuture<WeeklyChores> createWeeklyChores(Long tenantId, String weekId);
 
-    public CompletableFuture<WeeklyChores> createWeeklyChores(String weekId) {
-        return sendRequest("POST", "/v1/weekly-chores/week/" + weekId, WeeklyChores.class, "admin");
-    }
-
-    public CompletableFuture<TenantList> getTenants() {
-        return sendRequest("GET", "/v1/tenants", TenantList.class, "admin");
-    }
+    CompletableFuture<TenantList> listTenantsAdminToken();
 }

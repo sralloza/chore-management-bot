@@ -1,4 +1,5 @@
 from behave import *
+
 from common.api import request
 
 
@@ -12,4 +13,6 @@ def step_impl(context):
         json={"username": "qa-user", "tenant_id": context.telegram_creator_id},
     )
     if not res.ok:
-        raise Exception({"request-payload": res.request.body, "response-payload": res.text})
+        raise Exception(
+            {"request-payload": res.request.body, "response-payload": res.text}
+        )

@@ -3,6 +3,7 @@ from json import loads
 from behave import *
 from behave.api.async_step import async_run_until_complete
 from hamcrest import assert_that, equal_to
+
 from common.telegram import parse_keyboard
 
 

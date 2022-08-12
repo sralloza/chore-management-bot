@@ -8,8 +8,8 @@ import org.telegram.abilitybots.api.objects.MessageContext;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
-import services.ChoreManagementService;
 import security.Security;
+import services.ChoreManagementService;
 import utils.TableUtilsLatex;
 
 import java.io.File;
@@ -83,11 +83,11 @@ public abstract class BaseChoreManagementBot extends AbilityBot {
         }
     }
 
-    protected  <T> void sendTable(List<T> chores,
-                               Function<List<T>, List<List<String>>> normalizer,
-                               Long chatId,
-                               String filename,
-                               String emptyMessage) {
+    protected <T> void sendTable(List<T> chores,
+                                 Function<List<T>, List<List<String>>> normalizer,
+                                 Long chatId,
+                                 String filename,
+                                 String emptyMessage) {
         if (chores.isEmpty()) {
             sendMessage(emptyMessage, chatId, false);
             return;
