@@ -1,4 +1,6 @@
 from json import loads
+from pathlib import Path
+from uuid import uuid4
 
 from behave import *
 from behave.api.async_step import async_run_until_complete
@@ -41,3 +43,23 @@ def step_impl(context, msg):
     actual = parse_keyboard(keyboard)
 
     assert_that(actual, equal_to(expected))
+
+
+@step('the bot sends the image "{img}"')
+@async_run_until_complete
+async def step_impl(context, img):
+    expected_path = Path(__file__).parent.parent / f"settings/photos/{img}.png"
+    # if not expected_path.exists():
+    #     raise FileNotFoundError(f"File {expected_path} does not exist")
+
+    received_path = Path(__file__).with_name(uuid4().hex + ".png")
+    await context.client.download_media(context.res.media, received_path)
+
+    real_bytes = received_path.read_bytes()
+
+    expected_bytes = expected_path.read_bytes()
+
+    if real_bytes != expected_bytes:
+        raise AssertionError(f"Images not equal: {expected_path} != {received_path}")
+
+    received_path.unlink()

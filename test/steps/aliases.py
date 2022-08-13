@@ -1,7 +1,9 @@
 from random import randint
+from string import ascii_uppercase
 
 from behave import *
 
+from common.api import request
 from common.db import execute_query
 
 
@@ -29,6 +31,38 @@ def step_impl(context, text=None):
             '''
     """
     )
+
+
+@step("I create {n:d} chore type")
+@step("I create {n:d} chore types")
+def step_impl(context, n):
+    for i in range(n):
+        context.execute_steps("Given I use the admin token")
+
+        chore_id = ascii_uppercase[i]
+        res = request(
+            context,
+            "http://chore-management-api:8080/v1/chore-types",
+            "POST",
+            json={"id": chore_id, "description": f"{chore_id}-description"},
+        )
+        if not res.ok:
+            raise Exception(
+                {"request-payload": res.request.body, "response-payload": res.text}
+            )
+
+
+@step('I create the tasks for the week "{week_id}"')
+def step_impl(context, week_id):
+    res = request(
+        context,
+        f"http://chore-management-api:8080/v1/weekly-chores/{week_id}",
+        "POST",
+    )
+    if not res.ok:
+        raise Exception(
+            {"request-payload": res.request.body, "response-payload": res.text}
+        )
 
 
 @step('I skip the week with id "{week_id}"')
