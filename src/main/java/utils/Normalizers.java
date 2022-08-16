@@ -20,7 +20,7 @@ public class Normalizers {
         lines.add(columns);
 
         List<String> users = tickets.get(0).getTicketsByTenant().keySet().stream()
-                .sorted().collect(Collectors.toList());
+            .sorted().collect(Collectors.toList());
 
         for (String user : users) {
             List<String> row = new ArrayList<>();
@@ -46,7 +46,11 @@ public class Normalizers {
             List<String> row = new ArrayList<>();
             row.add(weeklyChore.getWeekId());
             for (Chore chore : weeklyChore.getChores()) {
-                row.add(String.join(",", chore.getAssignedUsernames()));
+                String rowText = String.join(",", chore.getAssignedUsernames());
+                if (!chore.getDone()) {
+                    rowText = "*" + rowText + "*";
+                }
+                row.add(rowText);
             }
             lines.add(row);
         }
