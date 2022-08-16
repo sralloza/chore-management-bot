@@ -1,7 +1,7 @@
 from behave import *
 
 from common.api import request
-
+from toolium.utils import dataset
 
 @step("I am a tenant")
 def step_impl(context):
@@ -20,6 +20,7 @@ def step_impl(context):
 
 @step("I create {n:d} more tenants")
 def step_impl(context, n):
+    tenants = dataset.project_config["extra_tenants"] = []
     for i in range(n):
         context.execute_steps("When I use the admin token")
         res = request(
@@ -32,3 +33,4 @@ def step_impl(context, n):
             raise Exception(
                 {"request-payload": res.request.body, "response-payload": res.text}
             )
+        tenants.append(res.json()["tenant_id"])

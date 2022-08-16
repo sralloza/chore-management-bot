@@ -22,7 +22,7 @@ public class ChoreManagementRepositoryImp extends BaseRepository implements Chor
     }
 
     public CompletableFuture<WeeklyChoresList> getTasks(Long tenantId) {
-        return sendGetRequest("/v1/weekly-chores?missing_only=true", WeeklyChoresList.class, tenantId);
+        return sendGetRequest("/v1/weekly-chores?missingOnly=true", WeeklyChoresList.class, tenantId);
     }
 
     public CompletableFuture<Void> completeTask(Long tenantId, String weekId, String choreType) {

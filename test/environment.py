@@ -38,6 +38,7 @@ def get_dataset():
 
 def before_scenario(context, scenario):
     tlm_before_scenario(context, scenario)
+    context.storage = {}
     check_naming(scenario)
 
     dataset.project_config = get_dataset()
