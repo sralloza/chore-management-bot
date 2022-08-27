@@ -1,7 +1,8 @@
 from behave import *
+from toolium.utils import dataset
 
 from common.api import request
-from toolium.utils import dataset
+
 
 @step("I am a tenant")
 def step_impl(context):

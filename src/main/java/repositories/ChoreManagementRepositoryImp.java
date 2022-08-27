@@ -26,12 +26,12 @@ public class ChoreManagementRepositoryImp extends BaseRepository implements Chor
     }
 
     public CompletableFuture<Void> completeTask(Long tenantId, String weekId, String choreType) {
-        String path = "/v1/weekly-chores/" + weekId + "/tenants/me/choreType/" + choreType + "/complete";
+        String path = "/v1/weekly-chores/" + weekId + "/choreType/" + choreType + "/complete";
         return sendPostRequest(path, null, tenantId);
     }
 
     public CompletableFuture<SimpleChoreList> getSimpleTasks(Long tenantId) {
-        return sendGetRequest("/v1/simple-chores", SimpleChoreList.class, tenantId);
+        return sendGetRequest("/v1/simple-chores?tenantId=me&done=false", SimpleChoreList.class, tenantId);
     }
 
     public CompletableFuture<Void> skipWeek(Long tenantId, String weekId) {

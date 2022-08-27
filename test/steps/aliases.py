@@ -2,10 +2,10 @@ from random import randint
 from string import ascii_uppercase
 
 from behave import *
+from toolium.utils.dataset import map_param
 
 from common.api import request
 from common.db import execute_query
-from toolium.utils.dataset import map_param
 
 
 @step("the bot returns the menu")

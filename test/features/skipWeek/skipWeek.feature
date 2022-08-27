@@ -16,7 +16,7 @@ Feature: Skip week
         And I reply to the bot's message with the text "<week_id>"
         Then the bot sends the message "Week skipped: <week_id>"
 
-        Examples:
+        Examples: week_id = <week_id>
             | week_id |
             | 2030.01 |
             | 2031.30 |
@@ -29,7 +29,7 @@ Feature: Skip week
         And I reply to the bot's message with the text "<week_id>"
         Then the bot sends the message "Error: Cannot skip a week in the past"
 
-        Examples:
+        Examples: week_id = <week_id>
             | week_id |
             | 2000.01 |
             | 2015.01 |
