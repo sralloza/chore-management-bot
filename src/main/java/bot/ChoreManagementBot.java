@@ -231,12 +231,13 @@ public class ChoreManagementBot extends BaseChoreManagementBot {
         switch (dataParts[0]) {
             case "COMPLETE_TASK":
                 service.completeTask(ctx.chatId(), dataParts[1], dataParts[2])
-                    .thenAccept(unused -> {
+                    .handle((unused, e) -> {
                         answerCallbackQuery(queryId);
-                        sendMessage(Messages.TASK_COMPLETED, ctx.chatId(), false);
-                    }).exceptionally(e -> {
-                        answerCallbackQuery(queryId);
-                        handleException((Exception) e, ctx.chatId());
+                        if (e != null) {
+                            handleException((Exception) e, ctx.chatId());
+                        } else {
+                            sendMessage(Messages.TASK_COMPLETED, ctx.chatId(), false);
+                        }
                         return null;
                     });
                 break;
