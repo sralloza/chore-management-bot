@@ -5,6 +5,7 @@ import exceptions.APIException;
 import lombok.extern.slf4j.Slf4j;
 import org.telegram.abilitybots.api.bot.AbilityBot;
 import org.telegram.abilitybots.api.objects.MessageContext;
+import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
@@ -107,5 +108,12 @@ public abstract class BaseChoreManagementBot extends AbilityBot {
         } catch (Exception exc) {
             handleException(exc, chatId);
         }
+    }
+
+    protected void answerCallbackQuery(String queryId) {
+        var answer = new AnswerCallbackQuery();
+        answer.setCallbackQueryId(queryId);
+        var result = silent.execute(answer);
+        System.out.println(result);
     }
 }

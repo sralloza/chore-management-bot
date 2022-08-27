@@ -6,13 +6,13 @@ from behave import *
 from behave.api.async_step import async_run_until_complete
 from hamcrest import assert_that, equal_to
 
-from common.telegram import parse_keyboard
+from common.telegram import get_conversation, parse_keyboard
 
 
 @step('I send the message "{msg}" to the bot')
 @async_run_until_complete
 async def step_impl(context, msg):
-    async with context.client.conversation(context.bot_username, timeout=5) as conv:
+    async with get_conversation(context) as conv:
         context.msg = await conv.send_message(msg)
         context.res = await conv.get_response()
 
@@ -20,7 +20,7 @@ async def step_impl(context, msg):
 @step('I reply to the bot\'s message with the text "{msg}"')
 @async_run_until_complete
 async def step_impl(context, msg):
-    async with context.client.conversation(context.bot_username, timeout=5) as conv:
+    async with get_conversation(context) as conv:
         context.msg = await conv.send_message(msg, reply_to=context.res)
         context.res = await conv.get_response()
 
@@ -63,3 +63,20 @@ async def step_impl(context, img):
         raise AssertionError(f"Images not equal: {expected_path} != {received_path}")
 
     received_path.unlink()
+
+
+@step('I send the inline query "{inline_query}"')
+@async_run_until_complete
+async def step_impl(context, inline_query):
+    buttons = context.res.buttons
+    buttons = [button for row in buttons for button in row]
+
+    for button in buttons:
+        if button.text == inline_query:
+            async with get_conversation(context) as conv:
+                result = await button.click()
+                assert result is not None
+                context.res = await conv.get_response(message=context.res)
+                return
+
+    raise ValueError("Inline query not found")

@@ -3,7 +3,6 @@ package bot;
 import com.google.inject.Inject;
 import com.typesafe.config.Config;
 import constants.Messages;
-import exceptions.APIException;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -151,11 +150,7 @@ public class ChoreManagementBot extends BaseChoreManagementBot {
             return;
         }
         if (ctx.update().hasCallbackQuery()) {
-            try {
-                processQueryData(ctx);
-            } catch (APIException e) {
-                handleException(e, ctx.chatId());
-            }
+            processQueryData(ctx);
             return;
         }
         if (ctx.update().getMessage().isReply()) {
@@ -230,15 +225,22 @@ public class ChoreManagementBot extends BaseChoreManagementBot {
 
     private void processQueryData(MessageContext ctx) {
         String data = ctx.update().getCallbackQuery().getData();
-        sendMessage("Received " + data, ctx.chatId(), false);
+        String queryId = ctx.update().getCallbackQuery().getId();
 
         String[] dataParts = data.split(SEPARATOR);
         switch (dataParts[0]) {
             case "COMPLETE_TASK":
                 service.completeTask(ctx.chatId(), dataParts[1], dataParts[2])
-                    .thenAccept(unused -> sendMessage(Messages.TASK_COMPLETED, ctx.chatId(), false));
+                    .handle((unused, e) -> {
+                        answerCallbackQuery(queryId);
+                        if (e != null) {
+                            handleException((Exception) e, ctx.chatId());
+                        } else {
+                            sendMessage(Messages.TASK_COMPLETED, ctx.chatId(), false);
+                        }
+                        return null;
+                    });
                 break;
-            case "SKIP":
             default:
                 sendMessage(Messages.UNDEFINED_COMMAND, ctx.chatId(), false);
                 break;
