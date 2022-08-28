@@ -1,7 +1,9 @@
 package repositories;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import config.ConfigRepository;
 import exceptions.APIException;
@@ -42,19 +44,25 @@ public class BaseRepository {
 
     protected <T> CompletableFuture<T> sendGetRequest(String path, Class<T> clazz, Long tenantId) {
         String token = security.getTenantToken(tenantId);
-        return sendRequest("GET", path, clazz, token);
+        return sendRequest("GET", path, clazz, token, null);
     }
 
     protected <T> CompletableFuture<T> sendPostRequest(String path, Class<T> clazz, Long tenantId) {
         String token = security.getTenantToken(tenantId);
-        return sendRequest("POST", path, clazz, token);
+        return sendRequest("POST", path, clazz, token, null);
+    }
+
+    protected <T> CompletableFuture<T> sendPostRequest(String path, Class<T> clazz, Long tenantId, String payload) {
+        String token = security.getTenantToken(tenantId);
+        return sendRequest("POST", path, clazz, token, payload);
     }
 
     protected <T> CompletableFuture<T> sendGetRequestAdmin(String path, Class<T> clazz) {
-        return sendRequest("GET", path, clazz, apiToken);
+        return sendRequest("GET", path, clazz, apiToken, null);
     }
 
-    private <T> CompletableFuture<T> sendRequest(String method, String path, Class<T> clazz, @Nullable String token) {
+    private <T> CompletableFuture<T> sendRequest(String method, String path, Class<T> clazz,
+                                                 @Nullable String token, @Nullable String payload) {
         HttpClient client = HttpClient.newHttpClient();
         HttpClient.Version version = getHttpClientVersion();
         log.debug("Using {}", version);
@@ -74,12 +82,16 @@ public class BaseRepository {
             requestBuilder = requestBuilder.header(header.getKey(), header.getValue());
         }
 
+        HttpRequest.BodyPublisher bodyPublisher = Optional.ofNullable(payload)
+            .map(HttpRequest.BodyPublishers::ofString)
+            .orElse(HttpRequest.BodyPublishers.noBody());
+
         switch (method) {
             case "POST":
-                requestBuilder = requestBuilder.POST(HttpRequest.BodyPublishers.noBody());
+                requestBuilder = requestBuilder.POST(bodyPublisher);
                 break;
             case "PUT":
-                requestBuilder = requestBuilder.PUT(HttpRequest.BodyPublishers.noBody());
+                requestBuilder = requestBuilder.PUT(bodyPublisher);
                 break;
             case "DELETE":
                 requestBuilder = requestBuilder.DELETE();
@@ -102,6 +114,7 @@ public class BaseRepository {
         if (clazz == null) {
             return null;
         }
+
         ObjectMapper mapper = new ObjectMapper().registerModule(new JavaTimeModule());
         try {
             return mapper.readValue(body, clazz);

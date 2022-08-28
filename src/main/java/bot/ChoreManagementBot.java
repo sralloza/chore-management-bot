@@ -6,7 +6,10 @@ import constants.Messages;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import models.CallbackQueryData;
 import models.SimpleChoreList;
+import models.Tenant;
+import org.apache.commons.lang3.SerializationUtils;
 import org.telegram.abilitybots.api.objects.Ability;
 import org.telegram.abilitybots.api.objects.MessageContext;
 import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
@@ -29,10 +32,14 @@ import static constants.Messages.ASK_FOR_WEEK_TO_UNSKIP;
 import static constants.Messages.COMPLETE_TASK;
 import static constants.Messages.NO_PENDING_TASKS;
 import static constants.Messages.NO_TASKS;
+import static constants.Messages.NO_TENANTS_REGISTERED;
 import static constants.Messages.NO_TICKETS_FOUND;
+import static constants.Messages.SELECT_TASK_TO_COMPLETE;
+import static constants.Messages.SELECT_TASK_TO_TRANSFER;
 import static constants.Messages.SKIP;
 import static constants.Messages.TASKS;
 import static constants.Messages.TICKETS;
+import static constants.Messages.TRANSFER;
 import static constants.Messages.UNSKIP;
 import static org.telegram.abilitybots.api.objects.Locality.USER;
 import static org.telegram.abilitybots.api.objects.Privacy.CREATOR;
@@ -42,7 +49,6 @@ import static org.telegram.abilitybots.api.objects.Privacy.PUBLIC;
 public class ChoreManagementBot extends BaseChoreManagementBot {
     private static final String WEEKLY_TASKS_TABLE_PNG = "weekly-tasks-table.png";
     private static final String TICKETS_TABLE_PNG = "tickets-table.png";
-    private static final String SEPARATOR = "/";
 
     private final Long creatorId;
     private final Keyboards keyboards;
@@ -113,7 +119,7 @@ public class ChoreManagementBot extends BaseChoreManagementBot {
             .build();
     }
 
-    public void startCompleteTaskFlow(MessageContext ctx) {
+    public void startFlowSelectTask(MessageContext ctx, CallbackQueryData.Type callbackDataId, String taskSelectorMsg) {
         SimpleChoreList tasks;
         try {
             tasks = service.getSimpleTasks(ctx.chatId()).get();
@@ -130,10 +136,21 @@ public class ChoreManagementBot extends BaseChoreManagementBot {
         keyboard.setKeyboard(tasks.stream()
             .map(chore -> {
                 var keyb = new InlineKeyboardButton();
-                var s = chore.getWeekId() + " - " + chore.getChoreType();
-                keyb.setText(s);
-                keyb.setCallbackData("COMPLETE_TASK" + SEPARATOR + chore.getWeekId() +
-                    SEPARATOR + chore.getChoreType());
+                var callbackData = new CallbackQueryData()
+                    .setType(callbackDataId)
+                    .setWeekId(chore.getWeekId())
+                    .setChoreType(chore.getChoreType());
+                keyb.setText(chore.getWeekId() + " - " + chore.getChoreType());
+                keyb.setCallbackData(callbackData.encode());
+                return keyb;
+            })
+            .map(List::of)
+            .collect(Collectors.toList()));
+        message.setReplyMarkup(keyboard);
+        message.setChatId(ctx.chatId().toString());
+        message.setText(taskSelectorMsg);
+        silent.execute(message);
+    }
                 return keyb;
             })
             .map(List::of)
@@ -180,7 +197,7 @@ public class ChoreManagementBot extends BaseChoreManagementBot {
                         NO_TASKS));
                 break;
             case COMPLETE_TASK:
-                startCompleteTaskFlow(ctx);
+                startFlowSelectTask(ctx, CallbackQueryData.Type.COMPLETE_TASK, SELECT_TASK_TO_COMPLETE);
                 break;
             case SKIP:
                 silent.forceReply(ASK_FOR_WEEK_TO_SKIP, ctx.chatId());

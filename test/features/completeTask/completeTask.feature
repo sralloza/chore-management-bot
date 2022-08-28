@@ -10,6 +10,7 @@ Feature: Complete task
         Then the bot sends the message "You don't have permission to execute this action"
 
 
+    @wip
     Scenario Outline: Complete task happy path
         Given I am a tenant
         And I create 2 more tenants
@@ -19,6 +20,7 @@ Feature: Complete task
         Then the bot sends the message "Select task to complete"
         And I send the inline query "<week_id> - <task_type>"
         Then the bot sends the message "Task completed"
+        And I click the last clicked button
 
         Examples: week_id = <week_id>, task_type = <task_type>
             | week_id | task_type |

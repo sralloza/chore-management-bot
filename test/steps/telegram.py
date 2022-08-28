@@ -74,9 +74,19 @@ async def step_impl(context, inline_query):
     for button in buttons:
         if button.text == inline_query:
             async with get_conversation(context) as conv:
+                context.last_button = button
                 result = await button.click()
                 assert result is not None
                 context.res = await conv.get_response(message=context.res)
                 return
 
     raise ValueError("Inline query not found")
+
+
+@step("I click the last clicked button")
+@async_run_until_complete
+async def step_impl(context):
+    async with get_conversation(context) as conv:
+        result = await context.last_button.click()
+        assert result is not None
+        context.res = await conv.get_response(message=context.res)
