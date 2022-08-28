@@ -33,6 +33,7 @@ import static constants.Messages.NO_TICKETS_FOUND;
 import static constants.Messages.SKIP;
 import static constants.Messages.TASKS;
 import static constants.Messages.TICKETS;
+import static constants.Messages.TRANSFER;
 import static constants.Messages.UNSKIP;
 import static org.telegram.abilitybots.api.objects.Locality.USER;
 import static org.telegram.abilitybots.api.objects.Privacy.CREATOR;
@@ -187,6 +188,9 @@ public class ChoreManagementBot extends BaseChoreManagementBot {
                 break;
             case UNSKIP:
                 silent.forceReply(ASK_FOR_WEEK_TO_UNSKIP, ctx.chatId());
+                break;
+            case TRANSFER:
+                sendMessage("Not implemented yet", chatId, false);
                 break;
             default:
                 sendMessageMarkdown("Undefined command", ctx.chatId());
