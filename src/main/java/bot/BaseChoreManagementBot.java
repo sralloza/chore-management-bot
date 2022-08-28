@@ -8,13 +8,17 @@ import org.telegram.abilitybots.api.objects.MessageContext;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
 import security.Security;
 import services.ChoreManagementService;
+import services.RedisService;
 import utils.TableUtilsLatex;
 
 import java.io.File;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Function;
 
 import static org.telegram.abilitybots.api.db.MapDBContext.offlineInstance;
@@ -25,18 +29,17 @@ public abstract class BaseChoreManagementBot extends AbilityBot {
     protected final ChoreManagementService service;
     protected final Security security;
     protected final TableUtilsLatex tableUtils;
+    protected final RedisService redisService;
 
-    protected BaseChoreManagementBot(String botToken,
-                                     String botUsername,
-                                     Keyboards keyboards,
-                                     ChoreManagementService service,
-                                     Security security,
-                                     TableUtilsLatex tableUtils) {
+    protected BaseChoreManagementBot(String botToken, String botUsername, Keyboards keyboards,
+                                     ChoreManagementService service, Security security,
+                                     TableUtilsLatex tableUtils, RedisService redisService) {
         super(botToken, botUsername, offlineInstance("db"));
         this.keyboards = keyboards;
         this.service = service;
         this.security = security;
         this.tableUtils = tableUtils;
+        this.redisService = redisService;
     }
 
     protected void sendMessageMarkdown(String msgStr, Long chatId) {
@@ -71,6 +74,9 @@ public abstract class BaseChoreManagementBot extends AbilityBot {
 
     protected void handleException(Exception e, Long chatId) {
         log.error("Manually handling exception", e);
+        Optional.ofNullable(redisService.getMessage(chatId))
+            .ifPresent(messageId -> deleteMessage(chatId, messageId));
+
         if (e.getClass().equals(APIException.class)) {
             var exc = (APIException) e;
             sendMessage("Error: " + exc.getMsg(), chatId, false);
@@ -115,5 +121,20 @@ public abstract class BaseChoreManagementBot extends AbilityBot {
         answer.setCallbackQueryId(queryId);
         var result = silent.execute(answer);
         System.out.println(result);
+    }
+
+    protected void deleteMessage(Long chatId, Integer messageId) {
+        var message = new DeleteMessage();
+        message.setMessageId(messageId);
+        message.setChatId(chatId);
+        silent.execute(message);
+    }
+
+    protected void editMessage(Long chatId, Integer messageId, String text) {
+        var message = new EditMessageText();
+        message.setMessageId(messageId);
+        message.setChatId(chatId);
+        message.setText(text);
+        silent.execute(message);
     }
 }

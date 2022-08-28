@@ -5,6 +5,7 @@ from uuid import uuid4
 from behave import *
 from behave.api.async_step import async_run_until_complete
 from hamcrest import assert_that, equal_to
+from telethon.errors.rpcerrorlist import MessageIdInvalidError
 
 from common.telegram import get_conversation, parse_keyboard
 
@@ -83,10 +84,12 @@ async def step_impl(context, inline_query):
     raise ValueError("Inline query not found")
 
 
-@step("I click the last clicked button")
+@step("I can't click the last clicked button")
 @async_run_until_complete
 async def step_impl(context):
-    async with get_conversation(context) as conv:
-        result = await context.last_button.click()
-        assert result is not None
-        context.res = await conv.get_response(message=context.res)
+    try:
+        await context.last_button.click()
+    except MessageIdInvalidError:
+        pass
+    else:
+        raise ValueError("Button click did not raise an error")

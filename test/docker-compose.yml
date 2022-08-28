@@ -34,3 +34,8 @@ services:
       - MYSQL_DATABASE=chore-management
     ports:
       - "3306:3306"
+
+  redis:
+    image: redis:6.2.6
+    ports:
+      - "6379:6379"

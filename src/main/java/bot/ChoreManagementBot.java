@@ -8,8 +8,6 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import models.CallbackQueryData;
 import models.SimpleChoreList;
-import models.Tenant;
-import org.apache.commons.lang3.SerializationUtils;
 import org.telegram.abilitybots.api.objects.Ability;
 import org.telegram.abilitybots.api.objects.MessageContext;
 import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
@@ -17,10 +15,12 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
+import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiRequestException;
 import org.telegram.telegrambots.meta.updateshandlers.SentCallback;
 import security.Security;
 import services.ChoreManagementService;
+import services.RedisService;
 import utils.Normalizers;
 import utils.TableUtilsLatex;
 
@@ -32,14 +32,11 @@ import static constants.Messages.ASK_FOR_WEEK_TO_UNSKIP;
 import static constants.Messages.COMPLETE_TASK;
 import static constants.Messages.NO_PENDING_TASKS;
 import static constants.Messages.NO_TASKS;
-import static constants.Messages.NO_TENANTS_REGISTERED;
 import static constants.Messages.NO_TICKETS_FOUND;
 import static constants.Messages.SELECT_TASK_TO_COMPLETE;
-import static constants.Messages.SELECT_TASK_TO_TRANSFER;
 import static constants.Messages.SKIP;
 import static constants.Messages.TASKS;
 import static constants.Messages.TICKETS;
-import static constants.Messages.TRANSFER;
 import static constants.Messages.UNSKIP;
 import static org.telegram.abilitybots.api.objects.Locality.USER;
 import static org.telegram.abilitybots.api.objects.Privacy.CREATOR;
@@ -60,13 +57,9 @@ public class ChoreManagementBot extends BaseChoreManagementBot {
     public ChoreManagementBot(Config config,
                               Keyboards keyboards,
                               ChoreManagementService choreManagementService,
-                              TableUtilsLatex tableUtils, Security security) {
-        super(config.getString("telegram.bot.token"),
-            config.getString("telegram.bot.username"),
-            keyboards,
-            choreManagementService,
-            security,
-            tableUtils);
+                              TableUtilsLatex tableUtils, Security security, RedisService redisService) {
+        super(config.getString("telegram.bot.token"), config.getString("telegram.bot.username"),
+            keyboards, choreManagementService, security, tableUtils, redisService);
 
         creatorId = config.getLong("telegram.creatorID");
         this.keyboards = keyboards;
@@ -149,16 +142,12 @@ public class ChoreManagementBot extends BaseChoreManagementBot {
         message.setReplyMarkup(keyboard);
         message.setChatId(ctx.chatId().toString());
         message.setText(taskSelectorMsg);
-        silent.execute(message);
-    }
-                return keyb;
-            })
-            .map(List::of)
-            .collect(Collectors.toList()));
-        message.setReplyMarkup(keyboard);
-        message.setChatId(ctx.chatId().toString());
-        message.setText(Messages.SELECT_TASK);
-        silent.execute(message);
+        try {
+            var messageId = sender.execute(message).getMessageId();
+            redisService.saveMessage(ctx.chatId(), messageId);
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
+        }
     }
 
     @SneakyThrows
@@ -242,18 +231,19 @@ public class ChoreManagementBot extends BaseChoreManagementBot {
 
     private void processQueryData(MessageContext ctx) {
         String data = ctx.update().getCallbackQuery().getData();
+        CallbackQueryData callbackData = CallbackQueryData.decode(data);
         String queryId = ctx.update().getCallbackQuery().getId();
 
-        String[] dataParts = data.split(SEPARATOR);
-        switch (dataParts[0]) {
-            case "COMPLETE_TASK":
-                service.completeTask(ctx.chatId(), dataParts[1], dataParts[2])
+        switch (callbackData.getType()) {
+            case COMPLETE_TASK:
+                service.completeTask(ctx.chatId(), callbackData.getWeekId(), callbackData.getChoreType())
                     .handle((unused, e) -> {
                         answerCallbackQuery(queryId);
                         if (e != null) {
                             handleException((Exception) e, ctx.chatId());
                         } else {
-                            sendMessage(Messages.TASK_COMPLETED, ctx.chatId(), false);
+                            var messageId = redisService.getMessage(ctx.chatId());
+                            editMessage(ctx.chatId(), messageId, Messages.TASK_COMPLETED);
                         }
                         return null;
                     });
