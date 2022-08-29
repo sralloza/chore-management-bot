@@ -1,9 +1,7 @@
 package repositories;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import config.ConfigRepository;
 import exceptions.APIException;
@@ -106,8 +104,8 @@ public class BaseRepository {
         log.debug("Request headers: " + request.headers());
 
         return client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
-            .thenApplyAsync(this::getBodyOpt)
-            .thenApplyAsync(bodyOpt -> bodyOpt.map(body -> processBody(body, clazz)).orElse(null));
+            .thenApply(this::getBodyOpt)
+            .thenApply(bodyOpt -> bodyOpt.map(body -> processBody(body, clazz)).orElse(null));
     }
 
     private <T> T processBody(String body, Class<T> clazz) {

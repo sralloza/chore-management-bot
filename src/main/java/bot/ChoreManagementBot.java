@@ -7,7 +7,8 @@ import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import models.CallbackQueryData;
-import models.SimpleChoreList;
+import models.QueryType;
+import models.SimpleChore;
 import org.telegram.abilitybots.api.objects.Ability;
 import org.telegram.abilitybots.api.objects.MessageContext;
 import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
@@ -25,11 +26,11 @@ import utils.Normalizers;
 import utils.TableUtilsLatex;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static constants.Messages.ASK_FOR_WEEK_TO_SKIP;
 import static constants.Messages.ASK_FOR_WEEK_TO_UNSKIP;
-import static constants.Messages.COMPLETE_TASK;
 import static constants.Messages.NO_PENDING_TASKS;
 import static constants.Messages.NO_TASKS;
 import static constants.Messages.NO_TICKETS_FOUND;
@@ -112,18 +113,16 @@ public class ChoreManagementBot extends BaseChoreManagementBot {
             .build();
     }
 
-    public void startFlowSelectTask(MessageContext ctx, CallbackQueryData.Type callbackDataId, String taskSelectorMsg) {
-        SimpleChoreList tasks;
-        try {
-            tasks = service.getSimpleTasks(ctx.chatId()).get();
-        } catch (Exception e) {
-            handleException(e, ctx.chatId());
-            return;
-        }
+    public void startFlowSelectTask(MessageContext ctx, List<SimpleChore> tasks,
+                                    QueryType callbackDataId, String taskSelectorMsg) {
         if (tasks.size() == 0) {
             sendMessageMarkdown(NO_PENDING_TASKS, ctx.chatId());
             return;
         }
+
+        Optional.ofNullable(redisService.getMessage(ctx.chatId(), callbackDataId))
+            .ifPresent(messageId -> deleteMessage(ctx.chatId(), messageId));
+
         var message = new SendMessage();
         var keyboard = new InlineKeyboardMarkup();
         keyboard.setKeyboard(tasks.stream()
@@ -144,7 +143,7 @@ public class ChoreManagementBot extends BaseChoreManagementBot {
         message.setText(taskSelectorMsg);
         try {
             var messageId = sender.execute(message).getMessageId();
-            redisService.saveMessage(ctx.chatId(), messageId);
+            redisService.saveMessage(ctx.chatId(), callbackDataId, messageId);
         } catch (TelegramApiException e) {
             e.printStackTrace();
         }
@@ -171,22 +170,18 @@ public class ChoreManagementBot extends BaseChoreManagementBot {
         switch (userMessage) {
             case TICKETS:
                 service.getTickets(chatId)
-                    .thenAccept(tickets -> sendTable(tickets,
-                        Normalizers::normalizeTickets,
-                        chatId,
-                        TICKETS_TABLE_PNG,
-                        NO_TICKETS_FOUND));
+                    .thenApply(Normalizers::normalizeTickets)
+                    .thenAccept(tickets -> sendTable(tickets, chatId, TICKETS_TABLE_PNG, NO_TICKETS_FOUND));
                 break;
             case TASKS:
                 service.getWeeklyTasks(chatId)
-                    .thenAccept(tasks -> sendTable(tasks,
-                        Normalizers::normalizeWeeklyChores,
-                        chatId,
-                        WEEKLY_TASKS_TABLE_PNG,
-                        NO_TASKS));
+                    .thenApply(Normalizers::normalizeWeeklyChores)
+                    .thenAccept(tasks -> sendTable(tasks, chatId, WEEKLY_TASKS_TABLE_PNG, NO_TASKS));
                 break;
-            case COMPLETE_TASK:
-                startFlowSelectTask(ctx, CallbackQueryData.Type.COMPLETE_TASK, SELECT_TASK_TO_COMPLETE);
+            case Messages.COMPLETE_TASK:
+                service.getSimpleTasks(chatId)
+                    .thenAccept(chores -> startFlowSelectTask(ctx, chores, QueryType.COMPLETE_TASK,
+                        SELECT_TASK_TO_COMPLETE));
                 break;
             case SKIP:
                 silent.forceReply(ASK_FOR_WEEK_TO_SKIP, ctx.chatId());
@@ -206,22 +201,12 @@ public class ChoreManagementBot extends BaseChoreManagementBot {
 
         switch (replyMsg) {
             case ASK_FOR_WEEK_TO_SKIP:
-                try {
-                    service.skipWeek(ctx.chatId(), userMessage).get();
-                } catch (Exception e) {
-                    handleException(e, ctx.chatId());
-                    return;
-                }
-                sendMessage("Week skipped: " + userMessage, ctx.chatId(), false);
+                service.skipWeek(ctx.chatId(), userMessage)
+                    .handle(replyHandler(ctx, "Week skipped: " + userMessage));
                 break;
             case ASK_FOR_WEEK_TO_UNSKIP:
-                try {
-                    service.unskipWeek(ctx.chatId(), userMessage).get();
-                } catch (Exception e) {
-                    handleException(e, ctx.chatId());
-                    return;
-                }
-                sendMessage("Week unskipped: " + userMessage, ctx.chatId(), false);
+                service.unskipWeek(ctx.chatId(), userMessage)
+                    .handle(replyHandler(ctx, "Week unskipped: " + userMessage));
                 break;
             default:
                 sendMessage(Messages.UNDEFINED_COMMAND, ctx.chatId(), false);
@@ -237,16 +222,7 @@ public class ChoreManagementBot extends BaseChoreManagementBot {
         switch (callbackData.getType()) {
             case COMPLETE_TASK:
                 service.completeTask(ctx.chatId(), callbackData.getWeekId(), callbackData.getChoreType())
-                    .handle((unused, e) -> {
-                        answerCallbackQuery(queryId);
-                        if (e != null) {
-                            handleException((Exception) e, ctx.chatId());
-                        } else {
-                            var messageId = redisService.getMessage(ctx.chatId());
-                            editMessage(ctx.chatId(), messageId, Messages.TASK_COMPLETED);
-                        }
-                        return null;
-                    });
+                    .handle(callbackQueryHandler(ctx, queryId, Messages.TASK_COMPLETED, QueryType.COMPLETE_TASK));
                 break;
             default:
                 sendMessage(Messages.UNDEFINED_COMMAND, ctx.chatId(), false);

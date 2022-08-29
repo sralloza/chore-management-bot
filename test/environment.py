@@ -19,6 +19,12 @@ from common.db import reset_databases
 logging.disable(logging.CRITICAL)
 
 
+def before_step(context, step):
+    """Hook used to slow down tests"""
+    # import time
+    # time.sleep(0.5)
+
+
 def before_all(context):
     tlm_before_all(context)
     context.admin_token = "bc6acdd7-9de0-495f-86ea-20beda48d626"

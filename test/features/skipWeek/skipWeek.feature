@@ -23,6 +23,7 @@ Feature: Skip week
             | 2031.50 |
 
 
+    # TODO: test forced reply keyboard
     Scenario Outline: Validate bot response skipping past week
         Given I am a tenant
         When I send the message "Skip" to the bot

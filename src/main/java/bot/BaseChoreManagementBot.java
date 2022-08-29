@@ -3,6 +3,7 @@ package bot;
 import constants.Messages;
 import exceptions.APIException;
 import lombok.extern.slf4j.Slf4j;
+import models.QueryType;
 import org.telegram.abilitybots.api.bot.AbilityBot;
 import org.telegram.abilitybots.api.objects.MessageContext;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
@@ -19,7 +20,7 @@ import utils.TableUtilsLatex;
 import java.io.File;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Function;
+import java.util.function.BiFunction;
 
 import static org.telegram.abilitybots.api.db.MapDBContext.offlineInstance;
 
@@ -73,8 +74,12 @@ public abstract class BaseChoreManagementBot extends AbilityBot {
     }
 
     protected void handleException(Exception e, Long chatId) {
+        handleException(e, chatId, null);
+    }
+
+    protected void handleException(Exception e, Long chatId, QueryType type) {
         log.error("Manually handling exception", e);
-        Optional.ofNullable(redisService.getMessage(chatId))
+        Optional.ofNullable(redisService.getMessage(chatId, type))
             .ifPresent(messageId -> deleteMessage(chatId, messageId));
 
         if (e.getClass().equals(APIException.class)) {
@@ -90,17 +95,15 @@ public abstract class BaseChoreManagementBot extends AbilityBot {
         }
     }
 
-    protected <T> void sendTable(List<T> chores,
-                                 Function<List<T>, List<List<String>>> normalizer,
+    protected void sendTable(List<List<String>> table,
                                  Long chatId,
                                  String filename,
                                  String emptyMessage) {
-        if (chores.isEmpty()) {
+        if (table.isEmpty()) {
             sendMessage(emptyMessage, chatId, false);
             return;
         }
-        var data = normalizer.apply(chores);
-        tableUtils.genTable(data, filename);
+        tableUtils.genTable(table, filename);
 
         try {
             InputFile inputFile = new InputFile(new File(filename));
@@ -124,6 +127,7 @@ public abstract class BaseChoreManagementBot extends AbilityBot {
     }
 
     protected void deleteMessage(Long chatId, Integer messageId) {
+        log.debug("Deleting message {} in chat {}", messageId, chatId);
         var message = new DeleteMessage();
         message.setMessageId(messageId);
         message.setChatId(chatId);
@@ -131,10 +135,36 @@ public abstract class BaseChoreManagementBot extends AbilityBot {
     }
 
     protected void editMessage(Long chatId, Integer messageId, String text) {
+        log.debug("Editing message {} in chat {} with text '{}'", messageId, chatId, text);
         var message = new EditMessageText();
         message.setMessageId(messageId);
         message.setChatId(chatId);
         message.setText(text);
         silent.execute(message);
+    }
+
+    protected BiFunction<Void, Throwable, Void> callbackQueryHandler(MessageContext ctx, String queryId,
+                                                                     String messageOk, QueryType type) {
+        return (unused, e) -> {
+            answerCallbackQuery(queryId);
+            if (e != null) {
+                handleException((Exception) e, ctx.chatId(), type);
+            } else {
+                var messageId = redisService.getMessage(ctx.chatId(), type);
+                editMessage(ctx.chatId(), messageId, messageOk);
+            }
+            return null;
+        };
+    }
+
+    protected BiFunction<Void, Throwable, Void> replyHandler(MessageContext ctx, String messageOk) {
+        return (unused, e) -> {
+            if (e != null) {
+                handleException((Exception) e, ctx.chatId());
+            } else {
+                sendMessage(messageOk, ctx.chatId(), false);
+            }
+            return null;
+        };
     }
 }

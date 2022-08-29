@@ -5,13 +5,17 @@ import models.Ticket;
 import models.WeeklyChores;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class Normalizers {
     public static List<List<String>> normalizeTickets(List<Ticket> tickets) {
-        List<List<String>> lines = new ArrayList<>();
+        if (tickets.isEmpty()) {
+            return Collections.emptyList();
+        }
 
+        List<List<String>> lines = new ArrayList<>();
         List<String> columns = new ArrayList<>();
         columns.add("Tenant");
         for (Ticket ticket : tickets) {
@@ -34,6 +38,10 @@ public class Normalizers {
     }
 
     public static List<List<String>> normalizeWeeklyChores(List<WeeklyChores> weeklyChores) {
+        if (weeklyChores.isEmpty()) {
+            return Collections.emptyList();
+        }
+
         List<List<String>> lines = new ArrayList<>();
         lines.add(new ArrayList<>());
         lines.get(0).add("Week");

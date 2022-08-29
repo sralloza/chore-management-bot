@@ -24,6 +24,7 @@ Feature: Unskip week
             | 2031.50 |
 
 
+    # TODO: test forced reply keyboard
     Scenario Outline: Validate bot response skipping past week
         Given I am a tenant
         And I skip the week with id "<week_id>"

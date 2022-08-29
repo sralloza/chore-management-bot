@@ -13,15 +13,12 @@ import java.util.stream.Stream;
 @Data
 @Accessors(chain = true)
 public class CallbackQueryData implements Serializable {
-    private Type type;
+    private QueryType type;
     private String weekId;
     private String choreType;
     private Integer queryMessageId;
     private Long tenantId;
 
-    public enum Type {
-        COMPLETE_TASK, TRANSFER_TASK
-    }
 
     public String encode() {
         return Stream.of(type, weekId, choreType, queryMessageId, tenantId)
@@ -34,7 +31,7 @@ public class CallbackQueryData implements Serializable {
             map(CallbackQueryData::fromString).collect(Collectors.toList());
 
         return new CallbackQueryData()
-            .setType(getOrNull(parts, 0, Type::valueOf))
+            .setType(getOrNull(parts, 0, QueryType::valueOf))
             .setWeekId(getOrNull(parts, 1, Function.identity()))
             .setChoreType(getOrNull(parts, 2, Function.identity()))
             .setQueryMessageId(getOrNull(parts, 3, Integer::parseInt))

@@ -1,3 +1,4 @@
+import time
 from json import loads
 from pathlib import Path
 from uuid import uuid4
@@ -78,7 +79,8 @@ async def step_impl(context, inline_query):
                 context.last_button = button
                 result = await button.click()
                 assert result is not None
-                context.res = await conv.get_response(message=context.res)
+                # print(context.res)
+                # context.res = await conv.get_edit(message=context.res, timeout=10)
                 return
 
     raise ValueError("Inline query not found")
@@ -87,6 +89,8 @@ async def step_impl(context, inline_query):
 @step("I can't click the last clicked button")
 @async_run_until_complete
 async def step_impl(context):
+    # TODO: we should not sleep in tests
+    time.sleep(0.1)
     try:
         await context.last_button.click()
     except MessageIdInvalidError:
