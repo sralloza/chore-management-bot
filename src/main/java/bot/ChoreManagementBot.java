@@ -3,6 +3,7 @@ package bot;
 import com.google.inject.Inject;
 import com.typesafe.config.Config;
 import constants.Messages;
+import constants.UserMessages;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -35,10 +36,6 @@ import static constants.Messages.NO_PENDING_TASKS;
 import static constants.Messages.NO_TASKS;
 import static constants.Messages.NO_TICKETS_FOUND;
 import static constants.Messages.SELECT_TASK_TO_COMPLETE;
-import static constants.Messages.SKIP;
-import static constants.Messages.TASKS;
-import static constants.Messages.TICKETS;
-import static constants.Messages.UNSKIP;
 import static org.telegram.abilitybots.api.objects.Locality.USER;
 import static org.telegram.abilitybots.api.objects.Privacy.CREATOR;
 import static org.telegram.abilitybots.api.objects.Privacy.PUBLIC;
@@ -168,25 +165,25 @@ public class ChoreManagementBot extends BaseChoreManagementBot {
         log.debug("User message: {}", userMessage);
 
         switch (userMessage) {
-            case TICKETS:
+            case UserMessages.TICKETS:
                 service.getTickets(chatId)
                     .thenApply(Normalizers::normalizeTickets)
                     .thenAccept(tickets -> sendTable(tickets, chatId, TICKETS_TABLE_PNG, NO_TICKETS_FOUND));
                 break;
-            case TASKS:
+            case UserMessages.TASKS:
                 service.getWeeklyTasks(chatId)
                     .thenApply(Normalizers::normalizeWeeklyChores)
                     .thenAccept(tasks -> sendTable(tasks, chatId, WEEKLY_TASKS_TABLE_PNG, NO_TASKS));
                 break;
-            case Messages.COMPLETE_TASK:
+            case UserMessages.COMPLETE_TASK:
                 service.getSimpleTasks(chatId)
                     .thenAccept(chores -> startFlowSelectTask(ctx, chores, QueryType.COMPLETE_TASK,
                         SELECT_TASK_TO_COMPLETE));
                 break;
-            case SKIP:
+            case UserMessages.SKIP:
                 silent.forceReply(ASK_FOR_WEEK_TO_SKIP, ctx.chatId());
                 break;
-            case UNSKIP:
+            case UserMessages.UNSKIP:
                 silent.forceReply(ASK_FOR_WEEK_TO_UNSKIP, ctx.chatId());
                 break;
             default:

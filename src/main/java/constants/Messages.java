@@ -7,18 +7,9 @@ import org.telegram.telegrambots.meta.updateshandlers.SentCallback;
 public class Messages {
     public static final String START_MSG = "*API connected*";
 
-    public static final String SKIP = "Skip";
-    public static final String UNSKIP = "Unskip";
-    public static final String COMPLETE_TASK = "Complete task";
-    public static final String TICKETS = "Tickets";
-    public static final String TASKS = "Tasks";
-    public static final String TRANSFER = "Transfer";
     public static final String NO_TASKS = "No tasks found";
     public static final String NO_PENDING_TASKS = "No pending tasks found";
-    public static final String NO_TENANTS_REGISTERED = "No tenants registered";
     public static final String SELECT_TASK_TO_COMPLETE = "Select task to complete";
-    public static final String SELECT_TASK_TO_TRANSFER = "Select task to transfer";
-    public static final String SELECT_TENANT = "Select tenant to transfer task to";
 
     public static final Callback DEFAULT_CALLBACK = new Callback();
     public static final String TASK_COMPLETED = "Task completed";
@@ -27,7 +18,6 @@ public class Messages {
     public static final String ASK_FOR_WEEK_TO_UNSKIP = "Write week id to unskip (year.number)";
     public static final String UNKNOWN_ERROR = "Unknown error happened\\. More info sent to the creator\\.";
     public static final String NO_TICKETS_FOUND = "No tickets found";
-    public static final String TRANSFER_STARTED = "Transfer started successfully";
 
     private static class Callback implements SentCallback<Boolean> {
         @Override
