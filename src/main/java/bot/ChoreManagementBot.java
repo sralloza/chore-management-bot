@@ -30,12 +30,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static constants.Messages.ASK_FOR_WEEK_TO_SKIP;
-import static constants.Messages.ASK_FOR_WEEK_TO_UNSKIP;
-import static constants.Messages.NO_PENDING_TASKS;
-import static constants.Messages.NO_TASKS;
-import static constants.Messages.NO_TICKETS_FOUND;
-import static constants.Messages.SELECT_TASK_TO_COMPLETE;
 import static org.telegram.abilitybots.api.objects.Locality.USER;
 import static org.telegram.abilitybots.api.objects.Privacy.CREATOR;
 import static org.telegram.abilitybots.api.objects.Privacy.PUBLIC;
@@ -98,12 +92,13 @@ public class ChoreManagementBot extends BaseChoreManagementBot {
             .privacy(CREATOR)
             .action(ctx -> {
                 // TODO: set privacy to PUBLIC with manual check
+                var chatId = ctx.chatId().toString();
                 var weekId = ctx.update().getMessage().getText().split(getCommandRegexSplit())[1];
                 try {
-                    service.createWeeklyChores(ctx.chatId(), weekId).get();
-                    sendMessage("Weekly chores created for week " + weekId, ctx.chatId(), false);
+                    service.createWeeklyChores(chatId, weekId).get();
+                    sendMessage("Weekly chores created for week " + weekId, chatId, false);
                 } catch (Exception e) {
-                    handleException(e, ctx.chatId());
+                    handleException(e, chatId);
                 }
             })
             .enableStats()
@@ -112,13 +107,14 @@ public class ChoreManagementBot extends BaseChoreManagementBot {
 
     public void startFlowSelectTask(MessageContext ctx, List<SimpleChore> tasks,
                                     QueryType callbackDataId, String taskSelectorMsg) {
+        var chatId = ctx.chatId().toString();
         if (tasks.size() == 0) {
-            sendMessageMarkdown(NO_PENDING_TASKS, ctx.chatId());
+            sendMessageMarkdown(Messages.NO_PENDING_TASKS, chatId);
             return;
         }
 
-        Optional.ofNullable(redisService.getMessage(ctx.chatId(), callbackDataId))
-            .ifPresent(messageId -> deleteMessage(ctx.chatId(), messageId));
+        Optional.ofNullable(redisService.getMessage(chatId, callbackDataId))
+            .ifPresent(messageId -> deleteMessage(chatId, messageId));
 
         var message = new SendMessage();
         var keyboard = new InlineKeyboardMarkup();
@@ -148,7 +144,7 @@ public class ChoreManagementBot extends BaseChoreManagementBot {
 
     @SneakyThrows
     private void processMsg(MessageContext ctx) {
-        if (!requireTenant(ctx)) {
+        if (!requireUser(ctx)) {
             return;
         }
         if (ctx.update().hasCallbackQuery()) {
@@ -161,33 +157,33 @@ public class ChoreManagementBot extends BaseChoreManagementBot {
         }
 
         String userMessage = ctx.update().getMessage().getText();
-        Long chatId = ctx.chatId();
+        String chatId = ctx.chatId().toString();
         log.debug("User message: {}", userMessage);
 
         switch (userMessage) {
             case UserMessages.TICKETS:
                 service.getTickets(chatId)
                     .thenApply(Normalizers::normalizeTickets)
-                    .thenAccept(tickets -> sendTable(tickets, chatId, TICKETS_TABLE_PNG, NO_TICKETS_FOUND));
+                    .thenAccept(tickets -> sendTable(tickets, chatId, TICKETS_TABLE_PNG, Messages.NO_TICKETS_FOUND));
                 break;
             case UserMessages.TASKS:
                 service.getWeeklyTasks(chatId)
                     .thenApply(Normalizers::normalizeWeeklyChores)
-                    .thenAccept(tasks -> sendTable(tasks, chatId, WEEKLY_TASKS_TABLE_PNG, NO_TASKS));
+                    .thenAccept(tasks -> sendTable(tasks, chatId, WEEKLY_TASKS_TABLE_PNG, Messages.NO_TASKS));
                 break;
             case UserMessages.COMPLETE_TASK:
                 service.getSimpleTasks(chatId)
                     .thenAccept(chores -> startFlowSelectTask(ctx, chores, QueryType.COMPLETE_TASK,
-                        SELECT_TASK_TO_COMPLETE));
+                        Messages.SELECT_TASK_TO_COMPLETE));
                 break;
             case UserMessages.SKIP:
-                silent.forceReply(ASK_FOR_WEEK_TO_SKIP, ctx.chatId());
+                silent.forceReply(Messages.ASK_FOR_WEEK_TO_SKIP, ctx.chatId());
                 break;
             case UserMessages.UNSKIP:
-                silent.forceReply(ASK_FOR_WEEK_TO_UNSKIP, ctx.chatId());
+                silent.forceReply(Messages.ASK_FOR_WEEK_TO_UNSKIP, ctx.chatId());
                 break;
             default:
-                sendMessageMarkdown("Undefined command", ctx.chatId());
+                sendMessageMarkdown("Undefined command", chatId);
                 break;
         }
     }
@@ -195,18 +191,19 @@ public class ChoreManagementBot extends BaseChoreManagementBot {
     private void processReplyMsg(MessageContext ctx) {
         String userMessage = ctx.update().getMessage().getText();
         var replyMsg = ctx.update().getMessage().getReplyToMessage().getText();
+        var chatId = ctx.chatId().toString();
 
         switch (replyMsg) {
-            case ASK_FOR_WEEK_TO_SKIP:
-                service.skipWeek(ctx.chatId(), userMessage)
+            case Messages.ASK_FOR_WEEK_TO_SKIP:
+                service.skipWeek(chatId, userMessage)
                     .handle(replyHandler(ctx, "Week skipped: " + userMessage));
                 break;
-            case ASK_FOR_WEEK_TO_UNSKIP:
-                service.unskipWeek(ctx.chatId(), userMessage)
+            case Messages.ASK_FOR_WEEK_TO_UNSKIP:
+                service.unskipWeek(chatId, userMessage)
                     .handle(replyHandler(ctx, "Week unskipped: " + userMessage));
                 break;
             default:
-                sendMessage(Messages.UNDEFINED_COMMAND, ctx.chatId(), false);
+                sendMessage(Messages.UNDEFINED_COMMAND, chatId, false);
                 break;
         }
     }
@@ -215,20 +212,21 @@ public class ChoreManagementBot extends BaseChoreManagementBot {
         String data = ctx.update().getCallbackQuery().getData();
         CallbackQueryData callbackData = CallbackQueryData.decode(data);
         String queryId = ctx.update().getCallbackQuery().getId();
+        String chatId = ctx.chatId().toString();
 
         switch (callbackData.getType()) {
             case COMPLETE_TASK:
-                service.completeTask(ctx.chatId(), callbackData.getWeekId(), callbackData.getChoreType())
+                service.completeTask(chatId, callbackData.getWeekId(), callbackData.getChoreType())
                     .handle(callbackQueryHandler(ctx, queryId, Messages.TASK_COMPLETED, QueryType.COMPLETE_TASK));
                 break;
             default:
-                sendMessage(Messages.UNDEFINED_COMMAND, ctx.chatId(), false);
+                sendMessage(Messages.UNDEFINED_COMMAND, chatId, false);
                 break;
         }
     }
 
     private void sendMenuAsync(MessageContext ctx) {
-        if (!requireTenant(ctx)) {
+        if (!requireUser(ctx)) {
             return;
         }
         SendMessage msg = new SendMessage();

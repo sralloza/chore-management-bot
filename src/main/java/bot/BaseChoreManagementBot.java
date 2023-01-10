@@ -43,11 +43,11 @@ public abstract class BaseChoreManagementBot extends AbilityBot {
         this.redisService = redisService;
     }
 
-    protected void sendMessageMarkdown(String msgStr, Long chatId) {
+    protected void sendMessageMarkdown(String msgStr, String chatId) {
         sendMessage(msgStr, chatId, true);
     }
 
-    protected void sendMessage(String msgStr, Long chatId, boolean markdown) {
+    protected void sendMessage(String msgStr, String chatId, boolean markdown) {
         SendMessage msg = new SendMessage();
         if (markdown) {
             msgStr = msgStr.replace("-", "\\-").replace("|", "\\|");
@@ -56,7 +56,7 @@ public abstract class BaseChoreManagementBot extends AbilityBot {
         }
 
         msg.setText(msgStr);
-        msg.setChatId(chatId.toString());
+        msg.setChatId(chatId);
         msg.setReplyMarkup(keyboards.getMainMenuKeyboard());
 
         var r = silent.execute(msg);
@@ -65,19 +65,20 @@ public abstract class BaseChoreManagementBot extends AbilityBot {
         }
     }
 
-    protected boolean requireTenant(MessageContext ctx) {
-        if (!security.isAuthenticated(ctx.chatId().toString())) {
-            sendMessage("You don't have permission to execute this action", ctx.chatId(), false);
+    protected boolean requireUser(MessageContext ctx) {
+        var chatId = ctx.chatId().toString();
+        if (!security.isAuthenticated(chatId)) {
+            sendMessage("You don't have permission to execute this action", chatId, false);
             return false;
         }
         return true;
     }
 
-    protected void handleException(Exception e, Long chatId) {
+    protected void handleException(Exception e, String chatId) {
         handleException(e, chatId, null);
     }
 
-    protected void handleException(Exception e, Long chatId, QueryType type) {
+    protected void handleException(Exception e, String chatId, QueryType type) {
         log.error("Manually handling exception", e);
         Optional.ofNullable(redisService.getMessage(chatId, type))
             .ifPresent(messageId -> deleteMessage(chatId, messageId));
@@ -91,12 +92,12 @@ public abstract class BaseChoreManagementBot extends AbilityBot {
         } else {
             sendMessage(Messages.UNKNOWN_ERROR, chatId, true);
             String msg = "ERROR:\n" + e.getClass() + " - " + e.getMessage();
-            sendMessage(msg, creatorId(), false);
+            sendMessage(msg, String.valueOf(creatorId()), false);
         }
     }
 
     protected void sendTable(List<List<String>> table,
-                                 Long chatId,
+                                 String chatId,
                                  String filename,
                                  String emptyMessage) {
         if (table.isEmpty()) {
@@ -109,7 +110,7 @@ public abstract class BaseChoreManagementBot extends AbilityBot {
             InputFile inputFile = new InputFile(new File(filename));
             SendPhoto message = new SendPhoto();
             message.setPhoto(inputFile);
-            message.setChatId(chatId.toString());
+            message.setChatId(chatId);
             this.execute(message);
 
             var result = new File(filename).delete();
@@ -126,7 +127,7 @@ public abstract class BaseChoreManagementBot extends AbilityBot {
         System.out.println(result);
     }
 
-    protected void deleteMessage(Long chatId, Integer messageId) {
+    protected void deleteMessage(String chatId, Integer messageId) {
         log.debug("Deleting message {} in chat {}", messageId, chatId);
         var message = new DeleteMessage();
         message.setMessageId(messageId);
@@ -145,12 +146,13 @@ public abstract class BaseChoreManagementBot extends AbilityBot {
 
     protected BiFunction<Void, Throwable, Void> callbackQueryHandler(MessageContext ctx, String queryId,
                                                                      String messageOk, QueryType type) {
+        var chatId = ctx.chatId().toString();
         return (unused, e) -> {
             answerCallbackQuery(queryId);
             if (e != null) {
-                handleException((Exception) e, ctx.chatId(), type);
+                handleException((Exception) e, chatId, type);
             } else {
-                var messageId = redisService.getMessage(ctx.chatId(), type);
+                var messageId = redisService.getMessage(chatId, type);
                 editMessage(ctx.chatId(), messageId, messageOk);
             }
             return null;
@@ -158,11 +160,12 @@ public abstract class BaseChoreManagementBot extends AbilityBot {
     }
 
     protected BiFunction<Void, Throwable, Void> replyHandler(MessageContext ctx, String messageOk) {
+        var chatId = ctx.chatId().toString();
         return (unused, e) -> {
             if (e != null) {
-                handleException((Exception) e, ctx.chatId());
+                handleException((Exception) e, chatId);
             } else {
-                sendMessage(messageOk, ctx.chatId(), false);
+                sendMessage(messageOk, chatId, false);
             }
             return null;
         };
