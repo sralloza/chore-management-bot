@@ -41,7 +41,7 @@ public class RedisService {
         }
     }
 
-    public Integer getMessage(Long chatId, QueryType type) {
+    public Integer getMessage(String chatId, QueryType type) {
         if (type == null) {
             return null;
         }

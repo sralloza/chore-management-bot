@@ -12,7 +12,7 @@ Feature: Unexpected text
 
 
     Scenario Outline: Send an unexpected text to the bot
-        Given I am a tenant
+        Given I am a user
         When I send the message "<text>" to the bot
         Then the bot returns the menu with text "Undefined command"
 

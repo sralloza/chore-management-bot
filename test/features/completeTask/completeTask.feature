@@ -11,8 +11,8 @@ Feature: Complete task
 
 
     Scenario Outline: Complete task happy path
-        Given I am a tenant
-        And I create 2 more tenants
+        Given I am a user
+        And I create 2 more users
         And I create 3 chore types
         And I create the tasks for the week "<week_id>"
         When I send the message "Complete task" to the bot

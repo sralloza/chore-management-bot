@@ -17,7 +17,7 @@ ansible-vault decrypt --vault-pass-file .vault-pass.txt --output environment.jso
 export TELEGRAM_BOT_TOKEN=$(cat environment.json | jq -r ".bot_token")
 export TELEGRAM_BOT_USERNAME=$(cat environment.json | jq -r ".bot_username")
 export TELEGRAM_CREATOR_ID=$(cat environment.json | jq -r ".telegram_creator_id")
-export ADMIN_TOKEN=$(cat environment.json | jq -r ".admin_token")
+export ADMIN_API_KEY=$(cat environment.json | jq -r ".admin_api_key")
 rm environment.json
 
 docker-compose up -d "$@"

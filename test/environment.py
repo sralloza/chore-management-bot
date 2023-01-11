@@ -27,7 +27,6 @@ def before_step(context, step):
 
 def before_all(context):
     tlm_before_all(context)
-    context.admin_token = "bc6acdd7-9de0-495f-86ea-20beda48d626"
 
 
 def before_feature(context, feature):
@@ -68,7 +67,7 @@ def telegram_client(context):
     phone = env["phone"]
     session_file = env["session_file"]
     context.telegram_creator_id = env["telegram_creator_id"]
-    context.admin_token = env["admin_token"]
+    context.admin_token = env["admin_api_key"]
 
     Path("qa.session").write_bytes(b64decode(session_file.encode()))
 

@@ -11,7 +11,7 @@ Feature: List tasks
 
 
     Scenario: List tasks with only one tenant
-        Given I am a tenant
+        Given I am a user
         And I create 1 chore type
         And I create the tasks for the week "2030.01"
         When I send the message "Tasks" to the bot
@@ -19,8 +19,8 @@ Feature: List tasks
 
 
     Scenario: List tasks with one task and multiple tenants
-        Given I am a tenant
-        And I create 2 more tenants
+        Given I am a user
+        And I create 2 more users
         And I create 3 chore types
         And I create the tasks for the week "2030.01"
         When I send the message "Tasks" to the bot
@@ -28,8 +28,8 @@ Feature: List tasks
 
 
     Scenario: List tasks with multiple tasks and multiple tenants
-        Given I am a tenant
-        And I create 2 more tenants
+        Given I am a user
+        And I create 2 more users
         And I create 3 chore types
         And I create the tasks for the following weeks
             | week_id |
@@ -41,8 +41,8 @@ Feature: List tasks
 
 
     Scenario: List tasks with multiple mixed tasks and multiple tenants
-        Given I am a tenant
-        And I create 2 more tenants
+        Given I am a user
+        And I create 2 more users
         And I create 3 chore types
         And the tenant "[CONTEXT:telegram_creator_id]" skips the week "2030.01"
         And I create the tasks for the following weeks
@@ -63,6 +63,6 @@ Feature: List tasks
 
 
     Scenario: List tasks when db is empty
-        Given I am a tenant
+        Given I am a user
         When i send the message "Tasks" to the bot
         Then the bot sends the message "No tasks found"

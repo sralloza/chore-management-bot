@@ -21,35 +21,35 @@ public class ChoreManagementServiceImp implements ChoreManagementService{
         this.repository = repository;
     }
 
-    public CompletableFuture<TicketList> getTickets(Long tenantId) {
-        return repository.getTickets(tenantId);
+    public CompletableFuture<TicketList> getTickets(String userId) {
+        return repository.getTickets(userId);
     }
 
-    public CompletableFuture<WeeklyChoresList> getWeeklyTasks(Long tenantId) {
-        return repository.getTasks(tenantId);
+    public CompletableFuture<WeeklyChoresList> getWeeklyTasks(String userId) {
+        return repository.getTasks(userId);
     }
 
-    public CompletableFuture<SimpleChoreList> getSimpleTasks(Long tenantId) {
-        return repository.getSimpleTasks(tenantId);
+    public CompletableFuture<SimpleChoreList> getSimpleTasks(String userId) {
+        return repository.getSimpleTasks(userId);
     }
 
-    public CompletableFuture<Void> completeTask(Long tenantId, String weekId, String choreType) {
-        return repository.completeTask(tenantId, weekId, choreType);
+    public CompletableFuture<Void> completeTask(String userId, String weekId, String choreType) {
+        return repository.completeTask(userId, weekId, choreType);
     }
 
-    public CompletableFuture<Void> skipWeek(Long tenantId, String weekId) {
-        return repository.skipWeek(tenantId, weekId);
+    public CompletableFuture<Void> skipWeek(String userId, String weekId) {
+        return repository.skipWeek(userId, weekId);
     }
 
-    public CompletableFuture<Void> unskipWeek(Long tenantId, String weekId) {
-        return repository.unskipWeek(tenantId, weekId);
+    public CompletableFuture<Void> unskipWeek(String userId, String weekId) {
+        return repository.unskipWeek(userId, weekId);
     }
 
-    public CompletableFuture<WeeklyChores> createWeeklyChores(Long tenantId, String weekId) {
-        return repository.createWeeklyChores(tenantId, weekId);
+    public CompletableFuture<WeeklyChores> createWeeklyChores(String userId, String weekId) {
+        return repository.createWeeklyChores(userId, weekId);
     }
 
-    public CompletableFuture<TenantList> listTenantsAdminToken() {
-        return repository.listTenantsAdminToken();
+    public CompletableFuture<TenantList> listUsersAdminToken() {
+        return repository.listUsersAdminToken();
     }
 }

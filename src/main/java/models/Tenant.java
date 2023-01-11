@@ -6,8 +6,8 @@ import lombok.Data;
 @Data
 public class Tenant {
     private String username;
-    @JsonProperty("tenant_id")
-    private Long tenantId;
+    @JsonProperty("id")
+    private String id;
     @JsonProperty("api_token")
     private String apiToken;
 }

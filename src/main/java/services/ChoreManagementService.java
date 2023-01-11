@@ -10,19 +10,19 @@ import java.util.concurrent.CompletableFuture;
 
 
 public interface ChoreManagementService {
-    CompletableFuture<TicketList> getTickets(Long tenantId);
+    CompletableFuture<TicketList> getTickets(String userId);
 
-    CompletableFuture<WeeklyChoresList> getWeeklyTasks(Long tenantId);
+    CompletableFuture<WeeklyChoresList> getWeeklyTasks(String userId);
 
-    CompletableFuture<SimpleChoreList> getSimpleTasks(Long tenantId);
+    CompletableFuture<SimpleChoreList> getSimpleTasks(String userId);
 
-    CompletableFuture<Void> completeTask(Long tenantId, String weekId, String choreType);
+    CompletableFuture<Void> completeTask(String userId, String weekId, String choreType);
 
-    CompletableFuture<Void> skipWeek(Long tenantId, String weekId);
+    CompletableFuture<Void> skipWeek(String userId, String weekId);
 
-    CompletableFuture<Void> unskipWeek(Long tenantId, String weekId);
+    CompletableFuture<Void> unskipWeek(String userId, String weekId);
 
-    CompletableFuture<WeeklyChores> createWeeklyChores(Long tenantId, String weekId);
+    CompletableFuture<WeeklyChores> createWeeklyChores(String userId, String weekId);
 
-    CompletableFuture<TenantList> listTenantsAdminToken();
+    CompletableFuture<TenantList> listUsersAdminToken();
 }

@@ -11,7 +11,7 @@ Feature: Unskip week
 
 
     Scenario Outline: Unskip week happy path
-        Given I am a tenant
+        Given I am a user
         And I skip the week with id "<week_id>"
         When I send the message "Unskip" to the bot
         And I reply to the bot's message with the text "<week_id>"
@@ -26,7 +26,7 @@ Feature: Unskip week
 
     # TODO: test forced reply keyboard
     Scenario Outline: Validate bot response skipping past week
-        Given I am a tenant
+        Given I am a user
         And I skip the week with id "<week_id>"
         When I send the message "Unskip" to the bot
         And I reply to the bot's message with the text "<week_id>"

@@ -40,18 +40,18 @@ public class BaseRepository {
         return http2 ? HttpClient.Version.HTTP_2 : HttpClient.Version.HTTP_1_1;
     }
 
-    protected <T> CompletableFuture<T> sendGetRequest(String path, Class<T> clazz, Long tenantId) {
-        String token = security.getTenantToken(tenantId);
+    protected <T> CompletableFuture<T> sendGetRequest(String path, Class<T> clazz, String userId) {
+        String token = security.getTenantToken(userId);
         return sendRequest("GET", path, clazz, token, null);
     }
 
-    protected <T> CompletableFuture<T> sendPostRequest(String path, Class<T> clazz, Long tenantId) {
-        String token = security.getTenantToken(tenantId);
+    protected <T> CompletableFuture<T> sendPostRequest(String path, Class<T> clazz, String userId) {
+        String token = security.getTenantToken(userId);
         return sendRequest("POST", path, clazz, token, null);
     }
 
-    protected <T> CompletableFuture<T> sendPostRequest(String path, Class<T> clazz, Long tenantId, String payload) {
-        String token = security.getTenantToken(tenantId);
+    protected <T> CompletableFuture<T> sendPostRequest(String path, Class<T> clazz, String userId, String payload) {
+        String token = security.getTenantToken(userId);
         return sendRequest("POST", path, clazz, token, payload);
     }
 

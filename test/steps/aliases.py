@@ -1,5 +1,5 @@
 from random import randint
-from string import ascii_uppercase
+from string import ascii_lowercase
 
 from behave import *
 from toolium.utils.dataset import map_param
@@ -40,12 +40,16 @@ def step_impl(context, n):
     for i in range(n):
         context.execute_steps("Given I use the admin token")
 
-        chore_id = ascii_uppercase[i]
+        chore_id = "ct-" + ascii_lowercase[i]
         res = request(
             context,
-            "http://chore-management-api:8080/v1/chore-types",
+            "http://chore-management-api:8080/api/v1/chore-types",
             "POST",
-            json={"id": chore_id, "description": f"{chore_id}-description"},
+            json={
+                "id": chore_id,
+                "description": f"{chore_id}-description",
+                "name": f"{chore_id}-name",
+            },
         )
         if not res.ok:
             raise Exception(
@@ -61,7 +65,7 @@ def step_impl(context, n):
 def step_impl(context, week_id):
     res = request(
         context,
-        f"http://chore-management-api:8080/v1/weekly-chores/{week_id}",
+        f"http://chore-management-api:8080/api/v1/weekly-chores/{week_id}",
         "POST",
     )
     if not res.ok:
