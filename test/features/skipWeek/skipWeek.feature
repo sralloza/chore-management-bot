@@ -11,7 +11,7 @@ Feature: Skip week
 
 
     Scenario Outline: Skip week happy path
-        Given I am a tenant
+        Given I am a user
         When I send the message "Skip" to the bot
         And I reply to the bot's message with the text "<week_id>"
         Then the bot sends the message "Week skipped: <week_id>"
@@ -23,8 +23,9 @@ Feature: Skip week
             | 2031.50 |
 
 
+    # TODO: test forced reply keyboard
     Scenario Outline: Validate bot response skipping past week
-        Given I am a tenant
+        Given I am a user
         When I send the message "Skip" to the bot
         And I reply to the bot's message with the text "<week_id>"
         Then the bot sends the message "Error: Cannot skip a week in the past"

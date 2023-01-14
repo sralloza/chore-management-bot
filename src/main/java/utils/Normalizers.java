@@ -1,51 +1,67 @@
 package utils;
 
-import models.Chore;
+import models.WeeklyChore;
+import models.ChoreType;
 import models.Ticket;
 import models.WeeklyChores;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class Normalizers {
-    public static List<List<String>> normalizeTickets(List<Ticket> tickets) {
-        List<List<String>> lines = new ArrayList<>();
+    public static List<List<String>> normalizeTickets(List<Ticket> tickets, List<ChoreType> choreTypes) {
+        if (tickets.isEmpty()) {
+            return Collections.emptyList();
+        }
 
+        Map<String, String> choreTypeMap = choreTypes.stream()
+          .collect(Collectors.toMap(ChoreType::getId, ChoreType::getName));
+
+        List<List<String>> lines = new ArrayList<>();
         List<String> columns = new ArrayList<>();
-        columns.add("Tenant");
+        columns.add("Usuario");
         for (Ticket ticket : tickets) {
-            columns.add(ticket.getId());
+            columns.add(choreTypeMap.get(ticket.getId()));
         }
         lines.add(columns);
 
-        List<String> users = tickets.get(0).getTicketsByTenant().keySet().stream()
+        List<String> users = tickets.get(0).getTicketsByUserName().keySet().stream()
             .sorted().collect(Collectors.toList());
 
         for (String user : users) {
             List<String> row = new ArrayList<>();
             row.add(user);
             for (Ticket ticket : tickets) {
-                row.add(ticket.getTicketsByTenant().get(user).toString());
+                row.add(ticket.getTicketsByUserName().get(user));
             }
             lines.add(row);
         }
         return lines;
     }
 
-    public static List<List<String>> normalizeWeeklyChores(List<WeeklyChores> weeklyChores) {
+    public static List<List<String>> normalizeWeeklyChores(List<WeeklyChores> weeklyChores, List<ChoreType> choreTypes) {
+        Map<String, String> choreTypeMap = choreTypes.stream()
+            .collect(Collectors.toMap(ChoreType::getId, ChoreType::getName));
+        if (weeklyChores.isEmpty()) {
+            return Collections.emptyList();
+        }
+
         List<List<String>> lines = new ArrayList<>();
         lines.add(new ArrayList<>());
         lines.get(0).add("Week");
 
-        for (Chore chore : weeklyChores.get(0).getChores()) {
-            lines.get(0).add(chore.getType());
+        for (WeeklyChore chore : weeklyChores.get(0).getChores()) {
+            var name = choreTypeMap.get(chore.getChoreTypeId());
+            lines.get(0).add(name);
         }
 
         for (WeeklyChores weeklyChore : weeklyChores) {
             List<String> row = new ArrayList<>();
             row.add(weeklyChore.getWeekId());
-            for (Chore chore : weeklyChore.getChores()) {
+            for (WeeklyChore chore : weeklyChore.getChores()) {
                 String rowText = String.join(",", chore.getAssignedUsernames());
                 if (!chore.getDone()) {
                     rowText = "*" + rowText + "*";

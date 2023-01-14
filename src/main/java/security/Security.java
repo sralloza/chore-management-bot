@@ -1,7 +1,7 @@
 package security;
 
 public interface Security {
-    String getTenantToken(Long tenantId);
+    String getTenantToken(String userId);
 
-    boolean isAuthenticated(String tenantId);
+    boolean isAuthenticated(String userId);
 }

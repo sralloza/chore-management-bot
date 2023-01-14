@@ -18,7 +18,7 @@ Configuration is done by setting environment variables.
 
 ### Optional
 
-- ***ADMIN_TOKEN***: token with admin privileges of the Chore Management API.
+- ***ADMIN_API_KEY***: API key with admin privileges of the Chore Management API.
 - ***API_BASE_URL***: base url where the Chore Management API is deployed.
 - ***API_HTTP2***: Enable HTTP/2. Defaults to `true`.
 - ***USERS_CACHE***: Enable or disable the users cache. If is disabled, for every message sent to the bot a GET request will be sent to the API. Designed to be used only in testing mode. Defaults to `true`.

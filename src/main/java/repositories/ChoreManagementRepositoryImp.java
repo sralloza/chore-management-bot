@@ -2,51 +2,63 @@ package repositories;
 
 import com.google.inject.Inject;
 import config.ConfigRepository;
-import models.SimpleChoreList;
-import models.TenantList;
-import models.TicketList;
+import models.Chore;
+import models.ChoreType;
+import models.Ticket;
+import models.User;
 import models.WeeklyChores;
-import models.WeeklyChoresList;
 import security.Security;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 public class ChoreManagementRepositoryImp extends BaseRepository implements ChoreManagementRepository {
-    @Inject
-    public ChoreManagementRepositoryImp(ConfigRepository config, Security security) {
-        super(config.getString("api.baseURL"), config.getString("api.token"), config, security);
-    }
+  @Inject
+  public ChoreManagementRepositoryImp(ConfigRepository config, Security security) {
+    super(config.getString("api.baseURL"), config.getString("api.adminApiKey"), config, security);
+  }
 
-    public CompletableFuture<TicketList> getTickets(Long tenantId) {
-        return sendGetRequest("/v1/tickets", TicketList.class, tenantId);
-    }
+  public CompletableFuture<List<Ticket>> getTickets(String userId) {
+    return sendGetRequest("/api/v1/tickets", Ticket[].class, userId)
+      .thenApply(Arrays::asList);
+  }
 
-    public CompletableFuture<WeeklyChoresList> getTasks(Long tenantId) {
-        return sendGetRequest("/v1/weekly-chores?missingOnly=true", WeeklyChoresList.class, tenantId);
-    }
+  public CompletableFuture<List<WeeklyChores>> getWeeklyChores(String userId) {
+    return sendGetRequest("/api/v1/weekly-chores?missing_only=true", WeeklyChores[].class, userId)
+      .thenApply(Arrays::asList);
+  }
 
-    public CompletableFuture<Void> completeTask(Long tenantId, String weekId, String choreType) {
-        String path = "/v1/weekly-chores/" + weekId + "/choreType/" + choreType + "/complete";
-        return sendPostRequest(path, null, tenantId);
-    }
+  public CompletableFuture<Void> completeTask(String userId, String weekId, String choreType) {
+    String path = "/api/v1/chores/" + weekId + "/type/" + choreType + "/complete";
+    return sendPostRequest(path, null, userId);
+  }
 
-    public CompletableFuture<SimpleChoreList> getSimpleTasks(Long tenantId) {
-        return sendGetRequest("/v1/simple-chores?tenantId=me&done=false", SimpleChoreList.class, tenantId);
-    }
+  public CompletableFuture<List<Chore>> getChores(String userId) {
+    return sendGetRequest("/api/v1/chores?user_id=me&done=false", Chore[].class, userId)
+      .thenApply(Arrays::asList);
+  }
 
-    public CompletableFuture<Void> skipWeek(Long tenantId, String weekId) {
-        return sendPostRequest("/v1/tenants/me/skip/" + weekId, null, tenantId);
-    }
+  public CompletableFuture<Void> skipWeek(String userId, String weekId) {
+    return sendPostRequest("/api/v1/users/me/deactivate/" + weekId, null, userId);
+  }
 
-    public CompletableFuture<Void> unskipWeek(Long tenantId, String weekId) {
-        return sendPostRequest("/v1/tenants/me/unskip/" + weekId, null, tenantId);
-    }
+  public CompletableFuture<Void> unskipWeek(String userId, String weekId) {
+    return sendPostRequest("/api/v1/users/me/reactivate/" + weekId, null, userId);
+  }
 
-    public CompletableFuture<WeeklyChores> createWeeklyChores(Long tenantId, String weekId) {
-        return sendPostRequest("/v1/weekly-chores/week/" + weekId, WeeklyChores.class, tenantId);
-    }
+  public CompletableFuture<WeeklyChores> createWeeklyChores(String userId, String weekId) {
+    return sendPostRequest("/api/v1/weekly-chores/week/" + weekId, WeeklyChores.class, userId);
+  }
 
-    public CompletableFuture<TenantList> listTenantsAdminToken() {
-        return sendGetRequestAdmin("/v1/tenants", TenantList.class);
-    }
+  public CompletableFuture<List<User>> listUsersAdminToken() {
+    return sendGetRequestAdmin("/api/v1/users", User[].class)
+      .thenApply(Arrays::asList);
+  }
+
+  @Override
+  public CompletableFuture<List<ChoreType>> getChoreTypes() {
+    return sendGetRequestAdmin("/api/v1/chore-types", ChoreType[].class)
+      .thenApply(Arrays::asList);
+  }
 }

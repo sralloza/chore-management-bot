@@ -7,7 +7,7 @@ import java.util.List;
 
 @Data
 public class WeeklyChores {
-    private List<Chore> chores;
+    private List<WeeklyChore> chores;
     private Integer rotation;
     @JsonProperty("week_id")
     private String weekId;

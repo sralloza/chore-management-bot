@@ -4,25 +4,32 @@ services:
   app:
     build:
       context: ../
-    command: app/wait-for-it.sh api:8080 -t 0 -- java -jar /app/chore-management-bot.jar
+    entrypoint:
+      [
+        "app/wait-for-it.sh", "-t", "0", "api:8080", "--",
+        "app/wait-for-it.sh", "-t", "0", "redis:6379", "--",
+        "java", "-jar", "/app/chore-management-bot.jar"
+      ]
     environment:
       - API_BASE_URL=http://api:8080
-      - ADMIN_TOKEN
+      - ADMIN_API_KEY
       - TELEGRAM_BOT_TOKEN
       - TELEGRAM_BOT_USERNAME
       - TELEGRAM_CREATOR_ID
       - USERS_CACHE=false
       - LOG_LEVEL=DEBUG
+      - REDIS_HOST=redis
 
   api:
     image: sralloza/chore-management-api:$API_VERSION
     environment:
-      - ADMIN_TOKEN
-      - MYSQL_USER=root
-      - MYSQL_PASSWORD=root
-      - MYSQL_HOST=database
-      - MYSQL_PORT=3306
-      - MYSQL_DATABASE=chore-management
+      - ADMIN_API_KEY
+      - APPLICATION_SECRET=whatever
+      - DATABASE_USER=root
+      - DATABASE_PASSWORD=root
+      - DATABASE_HOST=database
+      - DATABASE_PORT=3306
+      - DATABASE_NAME=chore-management
       - WAIT_FOR_IT_ADDRESS=database:3306
     ports:
       - "8080:8080"
@@ -34,3 +41,8 @@ services:
       - MYSQL_DATABASE=chore-management
     ports:
       - "3306:3306"
+
+  redis:
+    image: redis:6.2.6
+    ports:
+      - "6379:6379"

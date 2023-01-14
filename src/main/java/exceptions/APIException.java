@@ -16,8 +16,8 @@ public class APIException extends RuntimeException {
     private Integer statusCode;
 
     public APIException(HttpResponse<String> response) {
-        super(Generic.getResponseMessage(response).getMessage());
-        this.msg = Generic.getResponseMessage(response).getMessage();
+        super(Generic.getResponseMessage(response));
+        this.msg = Generic.getResponseMessage(response);
         this.url = response.uri().toString();
         this.statusCode = response.statusCode();
     }

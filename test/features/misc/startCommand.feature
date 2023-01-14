@@ -12,6 +12,6 @@ Feature: Start command
 
 
     Scenario: Send start command to the bot
-        Given I am a tenant
+        Given I am a user
         When I send the message "/start" to the bot
         Then the bot returns the menu

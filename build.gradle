@@ -18,7 +18,7 @@ test {
 }
 
 group 'es.sralloza'
-version '1.0.0-beta.2'
+version '0.1.0'
 def mainClassName = 'Main'
 
 repositories {
@@ -26,16 +26,18 @@ repositories {
 }
 
 dependencies {
-    implementation 'org.scilab.forge:jlatexmath:1.0.7'
-
     // Utils
     implementation 'org.projectlombok:lombok:1.18.24'
     implementation 'com.google.inject:guice:5.1.0'
     implementation 'com.typesafe:config:1.4.2'
+    implementation 'org.scilab.forge:jlatexmath:1.0.7'
 
     // Json encoding
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.13.3'
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.13.3'
+
+    // Redis
+    implementation 'redis.clients:jedis:4.2.3'
 
     // Telegram
     implementation 'org.telegram:telegrambots:6.1.0'

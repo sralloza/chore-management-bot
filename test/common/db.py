@@ -6,13 +6,14 @@ import mysql.connector
 
 logger = getLogger(__name__)
 DATABASES = (
-    "chore_types",
-    "chores",
+    "chore",
+    "chore_type",
+    "deactivated_weeks",
     "rotations",
-    "skipped_weeks",
-    "tenants",
-    "tickets",
-    "transfers",
+    "settings",
+    "ticket",
+    "transfer",
+    "user",
 )
 
 

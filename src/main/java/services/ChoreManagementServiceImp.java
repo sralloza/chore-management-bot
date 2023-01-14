@@ -2,54 +2,60 @@ package services;
 
 import com.google.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
-import models.SimpleChoreList;
-import models.TenantList;
-import models.TicketList;
+import models.Chore;
+import models.ChoreType;
+import models.Ticket;
+import models.User;
 import models.WeeklyChores;
-import models.WeeklyChoresList;
 import repositories.ChoreManagementRepository;
 
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 
 @Slf4j
-public class ChoreManagementServiceImp implements ChoreManagementService{
-    private final ChoreManagementRepository repository;
+public class ChoreManagementServiceImp implements ChoreManagementService {
+  private final ChoreManagementRepository repository;
 
-    @Inject
-    public ChoreManagementServiceImp(ChoreManagementRepository repository) {
-        this.repository = repository;
-    }
+  @Inject
+  public ChoreManagementServiceImp(ChoreManagementRepository repository) {
+    this.repository = repository;
+  }
 
-    public CompletableFuture<TicketList> getTickets(Long tenantId) {
-        return repository.getTickets(tenantId);
-    }
+  public CompletableFuture<List<Ticket>> getTickets(String userId) {
+    return repository.getTickets(userId);
+  }
 
-    public CompletableFuture<WeeklyChoresList> getWeeklyTasks(Long tenantId) {
-        return repository.getTasks(tenantId);
-    }
+  public CompletableFuture<List<WeeklyChores>> getWeeklyChores(String userId) {
+    return repository.getWeeklyChores(userId);
+  }
 
-    public CompletableFuture<SimpleChoreList> getSimpleTasks(Long tenantId) {
-        return repository.getSimpleTasks(tenantId);
-    }
+  public CompletableFuture<List<Chore>> getChores(String userId) {
+    return repository.getChores(userId);
+  }
 
-    public CompletableFuture<Void> completeTask(Long tenantId, String weekId, String choreType) {
-        return repository.completeTask(tenantId, weekId, choreType);
-    }
+  public CompletableFuture<Void> completeTask(String userId, String weekId, String choreType) {
+    return repository.completeTask(userId, weekId, choreType);
+  }
 
-    public CompletableFuture<Void> skipWeek(Long tenantId, String weekId) {
-        return repository.skipWeek(tenantId, weekId);
-    }
+  public CompletableFuture<Void> skipWeek(String userId, String weekId) {
+    return repository.skipWeek(userId, weekId);
+  }
 
-    public CompletableFuture<Void> unskipWeek(Long tenantId, String weekId) {
-        return repository.unskipWeek(tenantId, weekId);
-    }
+  public CompletableFuture<Void> unskipWeek(String userId, String weekId) {
+    return repository.unskipWeek(userId, weekId);
+  }
 
-    public CompletableFuture<WeeklyChores> createWeeklyChores(Long tenantId, String weekId) {
-        return repository.createWeeklyChores(tenantId, weekId);
-    }
+  @Override
+  public CompletableFuture<List<ChoreType>> getChoreTypes() {
+    return repository.getChoreTypes();
+  }
 
-    public CompletableFuture<TenantList> listTenantsAdminToken() {
-        return repository.listTenantsAdminToken();
-    }
+  public CompletableFuture<WeeklyChores> createWeeklyChores(String userId, String weekId) {
+    return repository.createWeeklyChores(userId, weekId);
+  }
+
+  public CompletableFuture<List<User>> listUsersAdminToken() {
+    return repository.listUsersAdminToken();
+  }
 }
