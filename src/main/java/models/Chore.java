@@ -2,17 +2,22 @@ package models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
+import lombok.experimental.Accessors;
 
-import java.util.List;
+import java.time.LocalDateTime;
 
 @Data
+@Accessors(chain = true)
 public class Chore {
-    @JsonProperty("assigned_ids")
-    private List<Long> assignedIds;
-    @JsonProperty("assigned_usernames")
-    private List<String> assignedUsernames;
-    private Boolean done;
-    private String type;
-    @JsonProperty("week_id")
-    private String weekId;
+  @JsonProperty("chore_type_id")
+  private String choreTypeId;
+  @JsonProperty("user_id")
+  private Long userId;
+  @JsonProperty("week_id")
+  private String weekId;
+  private Boolean done;
+  @JsonProperty("created_at")
+  private LocalDateTime createdAt;
+  @JsonProperty("completed_at")
+  private LocalDateTime completedAt;
 }

@@ -2,7 +2,7 @@ package security;
 
 import com.typesafe.config.Config;
 import lombok.extern.slf4j.Slf4j;
-import models.Tenant;
+import models.User;
 import services.ChoreManagementService;
 
 import javax.inject.Inject;
@@ -12,7 +12,7 @@ import java.util.List;
 public class SecurityImp implements Security {
     private final ChoreManagementService service;
     private final boolean cached;
-    private List<Tenant> userList;
+    private List<User> userList;
 
     @Inject
     public SecurityImp(ChoreManagementService service, Config config) {
@@ -25,7 +25,7 @@ public class SecurityImp implements Security {
         return getUsers().stream()
                 .filter(t -> t.getId().equals(tenantId))
                 .findFirst()
-                .map(Tenant::getApiToken)
+                .map(User::getApiKey)
                 .orElse(null);
     }
 
@@ -34,11 +34,12 @@ public class SecurityImp implements Security {
             .anyMatch(t -> t.getId().equals(tenantId));
     }
 
-    private List<Tenant> getUsers() {
+    private List<User> getUsers() {
         if (!cached || userList == null) {
             try {
                 userList = service.listUsersAdminToken().get();
             } catch (Exception e) {
+                log.error("Error getting users", e);
                 e.printStackTrace();
                 throw new RuntimeException(e);
             }

@@ -1,28 +1,31 @@
 package services;
 
-import models.SimpleChoreList;
-import models.TenantList;
-import models.TicketList;
+import models.Chore;
+import models.ChoreType;
+import models.Ticket;
+import models.User;
 import models.WeeklyChores;
-import models.WeeklyChoresList;
 
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 
 public interface ChoreManagementService {
-    CompletableFuture<TicketList> getTickets(String userId);
+  CompletableFuture<List<Ticket>> getTickets(String userId);
 
-    CompletableFuture<WeeklyChoresList> getWeeklyTasks(String userId);
+  CompletableFuture<List<WeeklyChores>> getWeeklyChores(String userId);
 
-    CompletableFuture<SimpleChoreList> getSimpleTasks(String userId);
+  CompletableFuture<List<Chore>> getChores(String userId);
 
-    CompletableFuture<Void> completeTask(String userId, String weekId, String choreType);
+  CompletableFuture<Void> completeTask(String userId, String weekId, String choreType);
 
-    CompletableFuture<Void> skipWeek(String userId, String weekId);
+  CompletableFuture<Void> skipWeek(String userId, String weekId);
 
-    CompletableFuture<Void> unskipWeek(String userId, String weekId);
+  CompletableFuture<Void> unskipWeek(String userId, String weekId);
 
-    CompletableFuture<WeeklyChores> createWeeklyChores(String userId, String weekId);
+  CompletableFuture<List<ChoreType>> getChoreTypes();
 
-    CompletableFuture<TenantList> listUsersAdminToken();
+  CompletableFuture<WeeklyChores> createWeeklyChores(String userId, String weekId);
+
+  CompletableFuture<List<User>> listUsersAdminToken();
 }
