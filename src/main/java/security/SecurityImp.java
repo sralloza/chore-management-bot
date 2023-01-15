@@ -1,5 +1,6 @@
 package security;
 
+import com.google.inject.Singleton;
 import com.typesafe.config.Config;
 import lombok.extern.slf4j.Slf4j;
 import models.User;
@@ -9,6 +10,7 @@ import javax.inject.Inject;
 import java.util.List;
 
 @Slf4j
+@Singleton
 public class SecurityImp implements Security {
     private final ChoreManagementService service;
     private final boolean cached;

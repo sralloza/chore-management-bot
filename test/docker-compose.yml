@@ -4,6 +4,7 @@ services:
   app:
     build:
       context: ../
+    container_name: app
     entrypoint:
       [
         "app/wait-for-it.sh", "-t", "0", "api:8080", "--",
@@ -22,8 +23,9 @@ services:
 
   api:
     image: sralloza/chore-management-api:$API_VERSION
+    container_name: api
     environment:
-      - ADMIN_API_KEY
+      - ADMIN_API_KEY=dd67df5a-5c40-4b73-a9ec-0c34c9bf3cac
       - APPLICATION_SECRET=whatever
       - DATABASE_USER=root
       - DATABASE_PASSWORD=root
@@ -36,6 +38,7 @@ services:
 
   database:
     image: mysql:oracle
+    container_name: database
     environment:
       - MYSQL_ROOT_PASSWORD=root
       - MYSQL_DATABASE=chore-management
@@ -44,5 +47,6 @@ services:
 
   redis:
     image: redis:6.2.6
+    container_name: redis
     ports:
       - "6379:6379"

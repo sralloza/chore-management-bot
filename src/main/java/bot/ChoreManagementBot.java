@@ -24,8 +24,8 @@ import org.telegram.telegrambots.meta.updateshandlers.SentCallback;
 import security.Security;
 import services.ChoreManagementService;
 import services.RedisService;
+import services.latex.LatexService;
 import utils.Normalizers;
-import utils.TableUtilsLatex;
 
 import java.util.List;
 import java.util.Map;
@@ -51,9 +51,9 @@ public class ChoreManagementBot extends BaseChoreManagementBot {
   public ChoreManagementBot(Config config,
                             Keyboards keyboards,
                             ChoreManagementService choreManagementService,
-                            TableUtilsLatex tableUtils, Security security, RedisService redisService) {
+                            LatexService latexService, Security security, RedisService redisService) {
     super(config.getString("telegram.bot.token"), config.getString("telegram.bot.username"),
-      keyboards, choreManagementService, security, tableUtils, redisService);
+      keyboards, choreManagementService, security, latexService, redisService);
 
     creatorId = config.getLong("telegram.creatorID");
     this.keyboards = keyboards;
