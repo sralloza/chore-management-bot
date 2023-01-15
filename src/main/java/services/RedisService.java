@@ -1,6 +1,7 @@
 package services;
 
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import com.typesafe.config.Config;
 import lombok.extern.slf4j.Slf4j;
 import models.QueryType;
@@ -8,6 +9,7 @@ import redis.clients.jedis.Jedis;
 import redis.clients.jedis.exceptions.JedisConnectionException;
 
 @Slf4j
+@Singleton
 public class RedisService {
     private final Jedis jedis;
 
@@ -29,6 +31,14 @@ public class RedisService {
         } catch (JedisConnectionException e) {
             return false;
         }
+    }
+
+    public void setex(String key, int expire, String value) {
+        jedis.setex(key, expire, value);
+    }
+
+    public String get(String key) {
+        return jedis.get(key);
     }
 
     public void saveMessage(Long chatId, QueryType type, Integer messageId) {
