@@ -45,6 +45,7 @@ public class LatexServiceCached implements LatexService {
   private boolean getFromCache(String key, String path) {
     String redisContent = redisService.get(key);
     if (redisContent != null) {
+      log.debug("Found cached latex table for key {}", key);
       byte[] decodedBytes = Base64.getDecoder().decode(redisContent);
       try {
         FileUtils.writeByteArrayToFile(new File(path), decodedBytes);
@@ -54,6 +55,7 @@ public class LatexServiceCached implements LatexService {
       }
       return true;
     }
+    log.debug("No cached latex table for key {}", key);
     return false;
   }
 

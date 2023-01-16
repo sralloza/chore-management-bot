@@ -7,4 +7,5 @@ export API_VERSION=$(curl -s https://api.github.com/repos/sralloza/chore-managem
 
 echo "Using API version $API_VERSION"
 
+docker-compose build
 docker-compose up

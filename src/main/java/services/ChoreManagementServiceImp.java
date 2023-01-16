@@ -51,8 +51,8 @@ public class ChoreManagementServiceImp implements ChoreManagementService {
     return repository.getChoreTypes();
   }
 
-  public CompletableFuture<WeeklyChores> createWeeklyChores(String userId, String weekId) {
-    return repository.createWeeklyChores(userId, weekId);
+  public CompletableFuture<WeeklyChores> createWeeklyChores(String weekId) {
+    return repository.createWeeklyChores(weekId);
   }
 
   public CompletableFuture<List<User>> listUsersAdminToken() {

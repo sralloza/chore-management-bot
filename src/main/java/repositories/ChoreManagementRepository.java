@@ -22,7 +22,7 @@ public interface ChoreManagementRepository {
 
   CompletableFuture<Void> unskipWeek(String userId, String weekId);
 
-  CompletableFuture<WeeklyChores> createWeeklyChores(String userId, String weekId);
+  CompletableFuture<WeeklyChores> createWeeklyChores(String weekId);
 
   CompletableFuture<List<User>> listUsersAdminToken();
 

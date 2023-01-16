@@ -3,6 +3,7 @@ package repositories;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.google.inject.Singleton;
 import config.ConfigRepository;
 import exceptions.APIException;
 import lombok.extern.slf4j.Slf4j;
@@ -20,21 +21,25 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 
 @Slf4j
+@Singleton
 public class BaseRepository {
   private static final Set<Integer> VALID_STATUS_CODES = Set.of(200, 201, 204);
   private final String baseURL;
   private final String apiToken;
   private final boolean http2;
   private final Security security;
+  protected final Executor executor;
 
-  public BaseRepository(String baseURL, String apiToken,
-                        ConfigRepository config, Security security) {
+  public BaseRepository(String baseURL, String apiToken, ConfigRepository config,
+                        Security security, Executor executor) {
     this.baseURL = baseURL;
     this.apiToken = apiToken;
     this.http2 = config.getBoolean("api.http2");
     this.security = security;
+    this.executor = executor;
   }
 
   private HttpClient.Version getHttpClientVersion() {
@@ -51,9 +56,8 @@ public class BaseRepository {
     return sendRequest("POST", path, clazz, token, null);
   }
 
-  protected <T> CompletableFuture<T> sendPostRequest(String path, Class<T> clazz, String userId, String payload) {
-    String token = security.getTenantToken(userId);
-    return sendRequest("POST", path, clazz, token, payload);
+  protected <T> CompletableFuture<T> sendPostRequestAdmin(String path, Class<T> clazz) {
+    return sendRequest("POST", path, clazz, apiToken, null);
   }
 
   protected <T> CompletableFuture<T> sendGetRequestAdmin(String path, Class<T> clazz) {
@@ -106,8 +110,8 @@ public class BaseRepository {
     log.debug("Request headers: " + request.headers());
 
     return client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
-      .thenApply(this::getBodyOpt)
-      .thenApply(bodyOpt -> bodyOpt.map(body -> processBody(body, clazz)).orElse(null));
+      .thenApplyAsync(this::getBodyOpt, executor)
+      .thenApplyAsync(bodyOpt -> bodyOpt.map(body -> processBody(body, clazz)).orElse(null), executor);
   }
 
   private <T> T processBody(String body, Class<T> clazz) {
@@ -119,21 +123,21 @@ public class BaseRepository {
     try {
       return mapper.readValue(body, clazz);
     } catch (JsonProcessingException e) {
-      System.err.println("Error parsing response: " + body);
       log.error("Error parsing response: " + body, e);
-      e.printStackTrace();
       return null;
     }
   }
 
   @NotNull
-  private Optional<String> getBodyOpt(HttpResponse<String> response) {
+  private Optional<String> getBodyOpt(HttpResponse<String> response) throws APIException {
     log.debug("Response code: " + response.statusCode());
     log.debug("Response headers: " + response.headers());
     log.debug("Response body: " + response.body());
 
     if (!VALID_STATUS_CODES.contains(response.statusCode())) {
-      throw new APIException(response);
+      var exception = new APIException(response);
+      log.error("Error calling API", exception);
+      throw exception;
     }
 
     return Optional.of(response.body());
