@@ -19,7 +19,6 @@ test {
 
 group 'es.sralloza'
 version '0.2.0'
-def mainClassName = 'Main'
 
 repositories {
     mavenCentral()
@@ -55,14 +54,14 @@ test {
     useJUnitPlatform()
 }
 
-task fatJar(type: Jar) {
-    duplicatesStrategy = DuplicatesStrategy.INCLUDE
+jar {
+    manifest {
+        attributes "Main-Class": "Main"
+    }
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     exclude 'META-INF/*.RSA', 'META-INF/*.SF', 'META-INF/*.DSA'
 
-    manifest {
-        attributes 'Main-Class': "${mainClassName}"
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
     }
-
-    from { configurations.compileClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
-    with jar
 }

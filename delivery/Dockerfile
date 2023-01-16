@@ -8,11 +8,11 @@ COPY src/ /home/gradle/src/
 
 # RUN ./gradlew build
 # RUN ./gradlew test --scan
-RUN ./gradlew fat -i
+RUN ./gradlew jar
 
 FROM sralloza/openjdk:11-jre
 
-COPY utils/wait-for-it.sh /app/wait-for-it.sh
+COPY delivery/wait-for-it.sh /app/wait-for-it.sh
 
 COPY --from=build /home/gradle/build/libs/*.jar /app/chore-management-bot.jar
 

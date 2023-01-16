@@ -3,7 +3,8 @@ version: "3.8"
 services:
   app:
     build:
-      context: ../
+      context: .
+      dockerfile: delivery/Dockerfile
     container_name: app
     entrypoint:
       [
@@ -50,3 +51,18 @@ services:
     container_name: redis
     ports:
       - "6379:6379"
+
+  provision:
+    build:
+      context: .
+      dockerfile: scripts/provision-data/Dockerfile
+    container_name: provision
+    entrypoint:
+      [
+        "delivery/wait-for-it.sh", "-t", "0", "api:8080", "--",
+        "scripts/provision-data/run.sh", "http://api:8080"
+      ]
+    volumes:
+      - ./scripts:/scripts
+      - ./delivery:/delivery
+      - ./.env:/.env
