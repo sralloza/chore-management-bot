@@ -4,6 +4,9 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import repositories.ChoreManagementRepository;
 import repositories.ChoreManagementRepositoryImp;
+import repositories.chores.ChoresRepositoryCacheableModule;
+import repositories.choretypes.ChoreTypesRepositoryCacheableModule;
+import repositories.users.UsersRepositoryCacheableModule;
 import security.Security;
 import security.SecurityImp;
 import services.ChoreManagementService;
@@ -18,6 +21,9 @@ public class Module extends AbstractModule {
   @Override
   protected void configure() {
     install(new LatexCacheableModule());
+    install(new ChoreTypesRepositoryCacheableModule());
+    install(new UsersRepositoryCacheableModule());
+    install(new ChoresRepositoryCacheableModule());
 
     Config config = ConfigFactory.load();
     String botName = config.getString("telegram.bot.username");

@@ -37,6 +37,11 @@ public class RedisService {
         jedis.setex(key, expire, value);
     }
 
+    public void del(String key) {
+        log.debug("Deleting key {}", key);
+        jedis.del(key);
+    }
+
     public String get(String key) {
         return jedis.get(key);
     }

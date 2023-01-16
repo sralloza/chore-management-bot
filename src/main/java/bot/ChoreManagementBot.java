@@ -34,7 +34,6 @@ import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
 
 import static org.telegram.abilitybots.api.objects.Locality.USER;
-import static org.telegram.abilitybots.api.objects.Privacy.CREATOR;
 import static org.telegram.abilitybots.api.objects.Privacy.PUBLIC;
 
 @Slf4j
@@ -176,19 +175,19 @@ public class ChoreManagementBot extends BaseChoreManagementBot {
 
     switch (userMessage) {
       case UserMessages.TICKETS:
-        choreTypesFuture = service.getChoreTypes();
+        choreTypesFuture = service.listChoreTypes();
         service.getTickets(chatId)
           .thenCombine(choreTypesFuture, Normalizers::normalizeTickets)
           .thenAcceptAsync(tickets -> sendTable(tickets, chatId, TICKETS_TABLE_PNG, Messages.NO_TICKETS_FOUND), executor);
         break;
       case UserMessages.TASKS:
-        choreTypesFuture = service.getChoreTypes();
+        choreTypesFuture = service.listChoreTypes();
         service.getWeeklyChores(chatId)
           .thenCombine(choreTypesFuture, Normalizers::normalizeWeeklyChores)
           .thenAcceptAsync(tasks -> sendTable(tasks, chatId, WEEKLY_TASKS_TABLE_PNG, Messages.NO_TASKS), executor);
         break;
       case UserMessages.COMPLETE_TASK:
-        choreTypesFuture = service.getChoreTypes();
+        choreTypesFuture = service.listChoreTypes();
         service.getChores(chatId)
           .thenCombineAsync(choreTypesFuture, (choreList, choreTypeList) ->
             startFlowSelectTask(ctx, choreList, choreTypeList), executor);
@@ -216,7 +215,7 @@ public class ChoreManagementBot extends BaseChoreManagementBot {
           .handle(replyHandler(ctx, "Week skipped: " + userMessage));
         break;
       case Messages.ASK_FOR_WEEK_TO_UNSKIP:
-        service.unskipWeek(chatId, userMessage)
+        service.unSkipWeek(chatId, userMessage)
           .handle(replyHandler(ctx, "Week unskipped: " + userMessage));
         break;
       default:
@@ -233,7 +232,7 @@ public class ChoreManagementBot extends BaseChoreManagementBot {
 
     switch (callbackData.getType()) {
       case COMPLETE_TASK:
-        service.completeTask(chatId, callbackData.getWeekId(), callbackData.getChoreType())
+        service.completeChore(chatId, callbackData.getWeekId(), callbackData.getChoreType())
           .handle(callbackQueryHandler(ctx, queryId, Messages.TASK_COMPLETED, QueryType.COMPLETE_TASK));
         break;
       default:

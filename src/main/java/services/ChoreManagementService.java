@@ -17,15 +17,15 @@ public interface ChoreManagementService {
 
   CompletableFuture<List<Chore>> getChores(String userId);
 
-  CompletableFuture<Void> completeTask(String userId, String weekId, String choreType);
+  CompletableFuture<Void> completeChore(String userId, String weekId, String choreType);
 
   CompletableFuture<Void> skipWeek(String userId, String weekId);
 
-  CompletableFuture<Void> unskipWeek(String userId, String weekId);
+  CompletableFuture<Void> unSkipWeek(String userId, String weekId);
 
-  CompletableFuture<List<ChoreType>> getChoreTypes();
+  CompletableFuture<List<ChoreType>> listChoreTypes();
 
   CompletableFuture<WeeklyChores> createWeeklyChores(String weekId);
 
-  CompletableFuture<List<User>> listUsersAdminToken();
+  CompletableFuture<List<User>> listUsers();
 }
