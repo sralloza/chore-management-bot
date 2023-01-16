@@ -70,9 +70,10 @@ public abstract class BaseChoreManagementBot extends AbilityBot {
     }
   }
 
-  protected boolean requireUser(MessageContext ctx) {
+  protected Boolean requireUser(MessageContext ctx) {
     var chatId = ctx.chatId().toString();
-    if (!security.isAuthenticated(chatId)) {
+    var isAuthenticated = security.isAuthenticated(chatId).join();
+    if (!isAuthenticated) {
       sendMessage("You don't have permission to execute this action", chatId, false);
       return false;
     }

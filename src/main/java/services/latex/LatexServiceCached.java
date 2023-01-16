@@ -14,11 +14,11 @@ import java.nio.file.Paths;
 import java.util.Base64;
 import java.util.List;
 
+import static constants.CacheConstants.LATEX_CACHE_EXPIRE_SECONDS;
 import static org.apache.commons.codec.digest.MessageDigestAlgorithms.SHA_256;
 
 @Slf4j
 public class LatexServiceCached implements LatexService {
-  private static final int LATEX_CACHE_EXPIRE_SECONDS = 2 * 7 * 24 * 3600;
   private final LatexServiceNonCached latexService;
   private final RedisService redisService;
 
@@ -39,7 +39,7 @@ public class LatexServiceCached implements LatexService {
   }
 
   private String getKey(List<List<String>> data, String prefix) {
-    return prefix + "." + new DigestUtils(SHA_256).digestAsHex(String.valueOf(data));
+    return prefix + "::" + new DigestUtils(SHA_256).digestAsHex(String.valueOf(data));
   }
 
   private boolean getFromCache(String key, String path) {

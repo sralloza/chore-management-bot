@@ -8,54 +8,71 @@ import models.Ticket;
 import models.User;
 import models.WeeklyChores;
 import repositories.ChoreManagementRepository;
+import repositories.chores.ChoresRepository;
+import repositories.choretypes.ChoreTypesRepository;
+import repositories.users.UsersRepository;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-
 @Slf4j
 public class ChoreManagementServiceImp implements ChoreManagementService {
   private final ChoreManagementRepository repository;
+  private final UsersRepository usersRepository;
+  private final ChoreTypesRepository choreTypesRepository;
+  private final ChoresRepository choresRepository;
 
   @Inject
-  public ChoreManagementServiceImp(ChoreManagementRepository repository) {
+  public ChoreManagementServiceImp(ChoreManagementRepository repository, UsersRepository usersRepository,
+                                   ChoreTypesRepository choreTypesRepository, ChoresRepository choresRepository) {
     this.repository = repository;
+    this.usersRepository = usersRepository;
+    this.choreTypesRepository = choreTypesRepository;
+    this.choresRepository = choresRepository;
   }
 
+  @Override
   public CompletableFuture<List<Ticket>> getTickets(String userId) {
     return repository.getTickets(userId);
   }
 
+  @Override
   public CompletableFuture<List<WeeklyChores>> getWeeklyChores(String userId) {
-    return repository.getWeeklyChores(userId);
+    return choresRepository.listWeeklyChores(userId);
   }
 
+  @Override
   public CompletableFuture<List<Chore>> getChores(String userId) {
-    return repository.getChores(userId);
+    return choresRepository.listChores(userId);
   }
 
-  public CompletableFuture<Void> completeTask(String userId, String weekId, String choreType) {
-    return repository.completeTask(userId, weekId, choreType);
+  @Override
+  public CompletableFuture<Void> completeChore(String userId, String weekId, String choreType) {
+    return choresRepository.completeChore(userId, weekId, choreType);
   }
 
+  @Override
   public CompletableFuture<Void> skipWeek(String userId, String weekId) {
     return repository.skipWeek(userId, weekId);
   }
 
-  public CompletableFuture<Void> unskipWeek(String userId, String weekId) {
+  @Override
+  public CompletableFuture<Void> unSkipWeek(String userId, String weekId) {
     return repository.unskipWeek(userId, weekId);
   }
 
   @Override
-  public CompletableFuture<List<ChoreType>> getChoreTypes() {
-    return repository.getChoreTypes();
+  public CompletableFuture<List<ChoreType>> listChoreTypes() {
+    return choreTypesRepository.listChoreTypes();
   }
 
+  @Override
   public CompletableFuture<WeeklyChores> createWeeklyChores(String weekId) {
-    return repository.createWeeklyChores(weekId);
+    return choresRepository.createWeeklyChores(weekId);
   }
 
-  public CompletableFuture<List<User>> listUsersAdminToken() {
-    return repository.listUsersAdminToken();
+  @Override
+  public CompletableFuture<List<User>> listUsers() {
+    return usersRepository.listUsers();
   }
 }

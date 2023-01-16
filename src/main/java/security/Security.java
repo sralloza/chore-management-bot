@@ -1,7 +1,8 @@
 package security;
 
-public interface Security {
-    String getTenantToken(String userId);
+import java.util.concurrent.CompletableFuture;
 
-    boolean isAuthenticated(String userId);
+public interface Security {
+    CompletableFuture<String> getUserApiKey(String userId);
+    CompletableFuture<Boolean> isAuthenticated(String userId);
 }

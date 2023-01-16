@@ -28,15 +28,14 @@ import java.util.concurrent.Executor;
 public class BaseRepository {
   private static final Set<Integer> VALID_STATUS_CODES = Set.of(200, 201, 204);
   private final String baseURL;
-  private final String apiToken;
+  private final String adminApiKey;
   private final boolean http2;
   private final Security security;
   protected final Executor executor;
 
-  public BaseRepository(String baseURL, String apiToken, ConfigRepository config,
-                        Security security, Executor executor) {
-    this.baseURL = baseURL;
-    this.apiToken = apiToken;
+  public BaseRepository(ConfigRepository config, Security security, Executor executor) {
+    this.baseURL = config.getString("api.baseURL");
+    this.adminApiKey = config.getString("api.adminApiKey");
     this.http2 = config.getBoolean("api.http2");
     this.security = security;
     this.executor = executor;
@@ -47,21 +46,21 @@ public class BaseRepository {
   }
 
   protected <T> CompletableFuture<T> sendGetRequest(String path, Class<T> clazz, String userId) {
-    String token = security.getTenantToken(userId);
-    return sendRequest("GET", path, clazz, token, null);
+    return security.getUserApiKey(userId)
+      .thenComposeAsync(token -> sendRequest("GET", path, clazz, token, null), executor);
   }
 
   protected <T> CompletableFuture<T> sendPostRequest(String path, Class<T> clazz, String userId) {
-    String token = security.getTenantToken(userId);
-    return sendRequest("POST", path, clazz, token, null);
+    return security.getUserApiKey(userId)
+      .thenComposeAsync(token -> sendRequest("POST", path, clazz, token, null), executor);
   }
 
   protected <T> CompletableFuture<T> sendPostRequestAdmin(String path, Class<T> clazz) {
-    return sendRequest("POST", path, clazz, apiToken, null);
+    return sendRequest("POST", path, clazz, adminApiKey, null);
   }
 
   protected <T> CompletableFuture<T> sendGetRequestAdmin(String path, Class<T> clazz) {
-    return sendRequest("GET", path, clazz, apiToken, null);
+    return sendRequest("GET", path, clazz, adminApiKey, null);
   }
 
   private <T> CompletableFuture<T> sendRequest(String method, String path, Class<T> clazz,
@@ -111,10 +110,10 @@ public class BaseRepository {
 
     return client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
       .thenApplyAsync(this::getBodyOpt, executor)
-      .thenApplyAsync(bodyOpt -> bodyOpt.map(body -> processBody(body, clazz)).orElse(null), executor);
+      .thenApplyAsync(bodyOpt -> bodyOpt.map(body -> fromJson(body, clazz)).orElse(null), executor);
   }
 
-  private <T> T processBody(String body, Class<T> clazz) {
+  protected <T> T fromJson(String body, Class<T> clazz) {
     if (clazz == null) {
       return null;
     }
@@ -123,7 +122,17 @@ public class BaseRepository {
     try {
       return mapper.readValue(body, clazz);
     } catch (JsonProcessingException e) {
-      log.error("Error parsing response: " + body, e);
+      log.error("Error parsing json: " + body, e);
+      return null;
+    }
+  }
+
+  protected String toJson(Object object) {
+    ObjectMapper mapper = new ObjectMapper().registerModule(new JavaTimeModule());
+    try {
+      return mapper.writeValueAsString(object);
+    } catch (JsonProcessingException e) {
+      log.error("Error parsing json: " + object, e);
       return null;
     }
   }
