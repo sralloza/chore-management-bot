@@ -11,14 +11,16 @@ import java.net.http.HttpResponse;
 @Data
 @AllArgsConstructor
 public class APIException extends RuntimeException {
-    private String msg;
-    private String url;
-    private Integer statusCode;
+  private String msg;
+  private String url;
+  private String method;
+  private Integer statusCode;
 
-    public APIException(HttpResponse<String> response) {
-        super(Generic.getResponseMessage(response));
-        this.msg = Generic.getResponseMessage(response);
-        this.url = response.uri().toString();
-        this.statusCode = response.statusCode();
-    }
+  public APIException(HttpResponse<String> response) {
+    super(Generic.getResponseMessage(response));
+    this.msg = Generic.getResponseMessage(response);
+    this.url = response.uri().toString();
+    this.method = response.request().method();
+    this.statusCode = response.statusCode();
+  }
 }

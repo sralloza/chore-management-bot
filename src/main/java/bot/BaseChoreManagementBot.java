@@ -12,6 +12,7 @@ import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
+import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import security.Security;
 import services.ChoreManagementService;
 import services.RedisService;
@@ -20,6 +21,7 @@ import services.latex.LatexService;
 import java.io.File;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.Executor;
 import java.util.function.BiFunction;
 
 import static org.telegram.abilitybots.api.db.MapDBContext.offlineInstance;
@@ -31,16 +33,18 @@ public abstract class BaseChoreManagementBot extends AbilityBot {
   protected final Security security;
   protected final LatexService latexService;
   protected final RedisService redisService;
+  protected final Executor executor;
 
   protected BaseChoreManagementBot(String botToken, String botUsername, Keyboards keyboards,
                                    ChoreManagementService service, Security security,
-                                   LatexService tableUtils, RedisService redisService) {
+                                   LatexService tableUtils, RedisService redisService, Executor executor) {
     super(botToken, botUsername, offlineInstance("db"));
     this.keyboards = keyboards;
     this.service = service;
     this.security = security;
     this.latexService = tableUtils;
     this.redisService = redisService;
+    this.executor = executor;
   }
 
   protected void sendMessageMarkdown(String msgStr, String chatId) {
@@ -59,9 +63,10 @@ public abstract class BaseChoreManagementBot extends AbilityBot {
     msg.setChatId(chatId);
     msg.setReplyMarkup(keyboards.getMainMenuKeyboard());
 
-    var r = silent.execute(msg);
-    if (r.isEmpty()) {
-      System.err.println("Error sending message");
+    try {
+      sender.execute(msg);
+    } catch (TelegramApiException e) {
+      log.error("Error sending message", e);
     }
   }
 
@@ -113,8 +118,10 @@ public abstract class BaseChoreManagementBot extends AbilityBot {
       message.setChatId(chatId);
       this.execute(message);
 
-      var result = new File(filename).delete();
-      log.debug("Deleting file {} result: {}", filename, result);
+      boolean result = new File(filename).delete();
+      if (!result) {
+        log.error("Could not delete file {}", filename);
+      }
     } catch (Exception exc) {
       handleException(exc, chatId);
     }
@@ -123,8 +130,11 @@ public abstract class BaseChoreManagementBot extends AbilityBot {
   protected void answerCallbackQuery(String queryId) {
     var answer = new AnswerCallbackQuery();
     answer.setCallbackQueryId(queryId);
-    var result = silent.execute(answer);
-    System.out.println(result);
+    try {
+      sender.execute(answer);
+    } catch (TelegramApiException e) {
+      log.error("Error answering callback query", e);
+    }
   }
 
   protected void deleteMessage(String chatId, Integer messageId) {

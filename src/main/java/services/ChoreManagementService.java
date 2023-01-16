@@ -25,7 +25,7 @@ public interface ChoreManagementService {
 
   CompletableFuture<List<ChoreType>> getChoreTypes();
 
-  CompletableFuture<WeeklyChores> createWeeklyChores(String userId, String weekId);
+  CompletableFuture<WeeklyChores> createWeeklyChores(String weekId);
 
   CompletableFuture<List<User>> listUsersAdminToken();
 }
