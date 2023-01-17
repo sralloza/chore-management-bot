@@ -13,8 +13,7 @@ import java.util.concurrent.Executor;
 
 public class ChoreTypesRepositoryNonCached extends BaseRepository implements ChoreTypesRepository {
   @Inject
-  public ChoreTypesRepositoryNonCached(String baseURL, String apiToken, ConfigRepository config,
-                                       Security security, Executor executor) {
+  public ChoreTypesRepositoryNonCached(ConfigRepository config, Security security, Executor executor) {
     super(config, security, executor);
   }
 

@@ -11,11 +11,11 @@ import java.util.concurrent.CompletableFuture;
 
 
 public interface ChoreManagementService {
-  CompletableFuture<List<Ticket>> getTickets(String userId);
+  CompletableFuture<List<Ticket>> listTickets(String userId);
 
   CompletableFuture<List<WeeklyChores>> getWeeklyChores(String userId);
 
-  CompletableFuture<List<Chore>> getChores(String userId);
+  CompletableFuture<List<Chore>> listChores(String userId);
 
   CompletableFuture<Void> completeChore(String userId, String weekId, String choreType);
 

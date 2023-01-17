@@ -13,8 +13,7 @@ import java.util.concurrent.Executor;
 
 public class UsersRepositoryNonCached extends BaseRepository implements UsersRepository {
   @Inject
-  public UsersRepositoryNonCached(String baseURL, String apiToken, ConfigRepository config,
-                                  Security security, Executor executor) {
+  public UsersRepositoryNonCached(ConfigRepository config, Security security, Executor executor) {
     super(config, security, executor);
   }
 
