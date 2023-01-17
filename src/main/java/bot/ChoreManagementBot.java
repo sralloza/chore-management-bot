@@ -66,7 +66,7 @@ public class ChoreManagementBot extends BaseChoreManagementBot {
   public Ability processMsg() {
     return Ability.builder()
       .name(DEFAULT)
-      .action(this::processMsg)
+      .action(ctx -> runCheckingUserRegistered(ctx, this::processMsg))
       .enableStats()
       .locality(USER)
       .privacy(PUBLIC)
@@ -79,7 +79,7 @@ public class ChoreManagementBot extends BaseChoreManagementBot {
       .info("Starts the bot")
       .locality(USER)
       .privacy(PUBLIC)
-      .action(this::sendMenuAsync)
+      .action(ctx -> runCheckingUserRegistered(ctx, this::sendMenuAsync))
       .enableStats()
       .build();
   }
@@ -155,9 +155,6 @@ public class ChoreManagementBot extends BaseChoreManagementBot {
   }
 
   private void processMsg(MessageContext ctx) {
-    if (!requireUser(ctx)) {
-      return;
-    }
     if (ctx.update().hasCallbackQuery()) {
       processQueryData(ctx);
       return;
@@ -176,21 +173,24 @@ public class ChoreManagementBot extends BaseChoreManagementBot {
     switch (userMessage) {
       case UserMessages.TICKETS:
         choreTypesFuture = service.listChoreTypes();
-        service.getTickets(chatId)
+        service.listTickets(chatId)
           .thenCombine(choreTypesFuture, Normalizers::normalizeTickets)
-          .thenAcceptAsync(tickets -> sendTable(tickets, chatId, TICKETS_TABLE_PNG, Messages.NO_TICKETS_FOUND), executor);
+          .thenAcceptAsync(tickets -> sendTable(tickets, chatId, "ticketsTable", Messages.NO_TICKETS_FOUND), executor)
+          .handleAsync(exceptionHandler(chatId), executor);
         break;
       case UserMessages.TASKS:
         choreTypesFuture = service.listChoreTypes();
         service.getWeeklyChores(chatId)
           .thenCombine(choreTypesFuture, Normalizers::normalizeWeeklyChores)
-          .thenAcceptAsync(tasks -> sendTable(tasks, chatId, WEEKLY_TASKS_TABLE_PNG, Messages.NO_TASKS), executor);
+          .thenAcceptAsync(tasks -> sendTable(tasks, chatId, "weeklyTasksTable", Messages.NO_TASKS), executor)
+          .handleAsync(exceptionHandler(chatId), executor);
         break;
       case UserMessages.COMPLETE_TASK:
         choreTypesFuture = service.listChoreTypes();
-        service.getChores(chatId)
+        service.listChores(chatId)
           .thenCombineAsync(choreTypesFuture, (choreList, choreTypeList) ->
-            startFlowSelectTask(ctx, choreList, choreTypeList), executor);
+            startFlowSelectTask(ctx, choreList, choreTypeList), executor)
+          .handleAsync(exceptionHandler(chatId), executor);
         break;
       case UserMessages.SKIP:
         silent.forceReply(Messages.ASK_FOR_WEEK_TO_SKIP, ctx.chatId());
@@ -233,7 +233,7 @@ public class ChoreManagementBot extends BaseChoreManagementBot {
     switch (callbackData.getType()) {
       case COMPLETE_TASK:
         service.completeChore(chatId, callbackData.getWeekId(), callbackData.getChoreType())
-          .handle(callbackQueryHandler(ctx, queryId, Messages.TASK_COMPLETED, QueryType.COMPLETE_TASK));
+          .handleAsync(callbackQueryHandler(ctx, queryId, Messages.TASK_COMPLETED, QueryType.COMPLETE_TASK), executor);
         break;
       default:
         sendMessage(Messages.UNDEFINED_COMMAND, chatId, false);
@@ -242,9 +242,6 @@ public class ChoreManagementBot extends BaseChoreManagementBot {
   }
 
   private void sendMenuAsync(MessageContext ctx) {
-    if (!requireUser(ctx)) {
-      return;
-    }
     SendMessage msg = new SendMessage();
     msg.setText(Messages.START_MSG);
     msg.disableNotification();

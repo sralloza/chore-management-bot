@@ -10,6 +10,7 @@ import models.WeeklyChores;
 import repositories.ChoreManagementRepository;
 import repositories.chores.ChoresRepository;
 import repositories.choretypes.ChoreTypesRepository;
+import repositories.tickets.TicketsRepository;
 import repositories.users.UsersRepository;
 
 import java.util.List;
@@ -21,19 +22,22 @@ public class ChoreManagementServiceImp implements ChoreManagementService {
   private final UsersRepository usersRepository;
   private final ChoreTypesRepository choreTypesRepository;
   private final ChoresRepository choresRepository;
+  private final TicketsRepository ticketsRepository;
 
   @Inject
   public ChoreManagementServiceImp(ChoreManagementRepository repository, UsersRepository usersRepository,
-                                   ChoreTypesRepository choreTypesRepository, ChoresRepository choresRepository) {
+                                   ChoreTypesRepository choreTypesRepository, ChoresRepository choresRepository,
+                                   TicketsRepository ticketsRepository) {
     this.repository = repository;
     this.usersRepository = usersRepository;
     this.choreTypesRepository = choreTypesRepository;
     this.choresRepository = choresRepository;
+    this.ticketsRepository = ticketsRepository;
   }
 
   @Override
-  public CompletableFuture<List<Ticket>> getTickets(String userId) {
-    return repository.getTickets(userId);
+  public CompletableFuture<List<Ticket>> listTickets(String userId) {
+    return ticketsRepository.listTickets(userId);
   }
 
   @Override
@@ -42,7 +46,7 @@ public class ChoreManagementServiceImp implements ChoreManagementService {
   }
 
   @Override
-  public CompletableFuture<List<Chore>> getChores(String userId) {
+  public CompletableFuture<List<Chore>> listChores(String userId) {
     return choresRepository.listChores(userId);
   }
 

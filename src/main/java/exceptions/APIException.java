@@ -15,6 +15,8 @@ public class APIException extends RuntimeException {
   private String url;
   private String method;
   private Integer statusCode;
+  private String xCorrelator;
+  private String apiKey;
 
   public APIException(HttpResponse<String> response) {
     super(Generic.getResponseMessage(response));
@@ -22,5 +24,7 @@ public class APIException extends RuntimeException {
     this.url = response.uri().toString();
     this.method = response.request().method();
     this.statusCode = response.statusCode();
+    this.xCorrelator = response.headers().firstValue("X-Correlator").orElse(null);
+    this.apiKey = response.request().headers().firstValue("x-token").orElse(null);
   }
 }

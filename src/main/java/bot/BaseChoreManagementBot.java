@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Executor;
 import java.util.function.BiFunction;
+import java.util.function.Consumer;
 
 import static org.telegram.abilitybots.api.db.MapDBContext.offlineInstance;
 
@@ -70,18 +71,27 @@ public abstract class BaseChoreManagementBot extends AbilityBot {
     }
   }
 
-  protected Boolean requireUser(MessageContext ctx) {
+  protected void runCheckingUserRegistered(MessageContext ctx, Consumer<MessageContext> consumer) {
     var chatId = ctx.chatId().toString();
-    var isAuthenticated = security.isAuthenticated(chatId).join();
-    if (!isAuthenticated) {
-      sendMessage("You don't have permission to execute this action", chatId, false);
-      return false;
-    }
-    return true;
+    security.isAuthenticated(chatId)
+      .thenAcceptAsync(isAuthenticated -> {
+        if (isAuthenticated) {
+          consumer.accept(ctx);
+        } else {
+          sendMessage("You don't have permission to execute this action", chatId, false);
+        }
+      }, executor);
   }
 
   protected void handleException(Exception e, String chatId) {
     handleException(e, chatId, null);
+  }
+
+  protected static boolean isApiExceptionNormalForUser(APIException exc) {
+    if (exc.getStatusCode().equals(404) && exc.getMsg().equalsIgnoreCase("Not Found")) {
+      return false;
+    }
+    return exc.getStatusCode() < 500;
   }
 
   protected void handleException(Exception e, String chatId, QueryType type) {
@@ -89,39 +99,52 @@ public abstract class BaseChoreManagementBot extends AbilityBot {
     Optional.ofNullable(redisService.getMessage(chatId, type))
       .ifPresent(messageId -> deleteMessage(chatId, messageId));
 
-    if (e.getClass().equals(APIException.class)) {
-      var exc = (APIException) e;
-      sendMessage("Error: " + exc.getMsg(), chatId, false);
-    } else if (e.getCause().getClass().equals(APIException.class)) {
-      var exc = (APIException) e.getCause();
+    Exception realException = e;
+    boolean isApiException = false;
+    if (e instanceof APIException) {
+      isApiException = true;
+    } else if (e.getCause() instanceof APIException) {
+      isApiException = true;
+      realException = (Exception) e.getCause();
+    }
+    if (isApiException) {
+      APIException exc = (APIException) realException;
+      if (!isApiExceptionNormalForUser(exc)) {
+        sendUnknownError(e, chatId);
+        return;
+      }
       sendMessage("Error: " + exc.getMsg(), chatId, false);
     } else {
-      sendMessage(Messages.UNKNOWN_ERROR, chatId, true);
-      String msg = "ERROR:\n" + e.getClass() + " - " + e.getMessage();
-      sendMessage(msg, String.valueOf(creatorId()), false);
+      sendUnknownError(e, chatId);
     }
+  }
+
+  private void sendUnknownError(Exception e, String chatId) {
+    sendMessage(Messages.UNKNOWN_ERROR, chatId, true);
+    String msg = "ERROR:\n" + e.getClass() + " - " + e.getMessage();
+    sendMessage(msg, String.valueOf(creatorId()), false);
   }
 
   protected void sendTable(List<List<String>> table,
                            String chatId,
-                           String filename,
+                           String keyPrefix,
                            String emptyMessage) {
     if (table.isEmpty()) {
       sendMessage(emptyMessage, chatId, false);
       return;
     }
-    latexService.genTable(table, filename);
+    File file = latexService.genTable(table, keyPrefix);
 
     try {
-      InputFile inputFile = new InputFile(new File(filename));
+      InputFile inputFile = new InputFile(file);
       SendPhoto message = new SendPhoto();
       message.setPhoto(inputFile);
       message.setChatId(chatId);
       this.execute(message);
 
-      boolean result = new File(filename).delete();
+      boolean result = file.delete();
       if (!result) {
-        log.error("Could not delete file {}", filename);
+        log.error("Could not delete file {}", file.getAbsolutePath());
       }
     } catch (Exception exc) {
       handleException(exc, chatId);
@@ -179,6 +202,15 @@ public abstract class BaseChoreManagementBot extends AbilityBot {
         sendMessage(messageOk, chatId, false);
       }
       return null;
+    };
+  }
+
+  protected <T> BiFunction<T, Throwable, T> exceptionHandler(String chatId) {
+    return (T obj, Throwable throwable) -> {
+      if (throwable != null) {
+        handleException((Exception) throwable, chatId);
+      }
+      return obj;
     };
   }
 }
