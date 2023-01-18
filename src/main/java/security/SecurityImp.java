@@ -1,27 +1,25 @@
 package security;
 
+import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import models.User;
-import services.ChoreManagementService;
+import repositories.users.UsersRepository;
 
-import javax.inject.Inject;
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 @Slf4j
 @Singleton
 public class SecurityImp implements Security {
-  private final ChoreManagementService service;
+  private final UsersRepository usersRepository;
 
   @Inject
-  public SecurityImp(ChoreManagementService service) {
-    this.service = service;
+  public SecurityImp(UsersRepository usersRepository) {
+    this.usersRepository = usersRepository;
   }
 
   public CompletableFuture<String> getUserApiKey(String userId) {
-    return getUsers()
+    return usersRepository.listUsers()
       .thenApply(users -> users.stream()
         .filter(user -> user.getId().equals(userId))
         .findFirst()
@@ -30,12 +28,8 @@ public class SecurityImp implements Security {
   }
 
   public CompletableFuture<Boolean> isAuthenticated(String userId) {
-    return getUsers()
+    return usersRepository.listUsers()
       .thenApply(users -> users.stream()
         .anyMatch(t -> t.getId().equals(userId)));
-  }
-
-  private CompletableFuture<List<User>> getUsers() {
-    return service.listUsers();
   }
 }

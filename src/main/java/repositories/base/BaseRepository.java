@@ -1,4 +1,4 @@
-package repositories;
+package repositories.base;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -7,8 +7,6 @@ import com.google.inject.Singleton;
 import config.ConfigRepository;
 import exceptions.APIException;
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
-import security.Security;
 
 import javax.annotation.Nullable;
 import java.net.URI;
@@ -28,43 +26,23 @@ import java.util.concurrent.Executor;
 public class BaseRepository {
   private static final Set<Integer> VALID_STATUS_CODES = Set.of(200, 201, 204);
   private final String baseURL;
-  private final String adminApiKey;
   private final boolean http2;
-  private final Security security;
   protected final Executor executor;
+  protected final ObjectMapper objectMapper;
 
-  public BaseRepository(ConfigRepository config, Security security, Executor executor) {
+  public BaseRepository(ConfigRepository config, Executor executor) {
     this.baseURL = config.getString("api.baseURL");
-    this.adminApiKey = config.getString("api.adminApiKey");
     this.http2 = config.getBoolean("api.http2");
-    this.security = security;
     this.executor = executor;
+    this.objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
   }
 
   private HttpClient.Version getHttpClientVersion() {
     return http2 ? HttpClient.Version.HTTP_2 : HttpClient.Version.HTTP_1_1;
   }
 
-  protected <T> CompletableFuture<T> sendGetRequest(String path, Class<T> clazz, String userId) {
-    return security.getUserApiKey(userId)
-      .thenComposeAsync(token -> sendRequest("GET", path, clazz, token, null), executor);
-  }
-
-  protected <T> CompletableFuture<T> sendPostRequest(String path, Class<T> clazz, String userId) {
-    return security.getUserApiKey(userId)
-      .thenComposeAsync(token -> sendRequest("POST", path, clazz, token, null), executor);
-  }
-
-  protected <T> CompletableFuture<T> sendPostRequestAdmin(String path, Class<T> clazz) {
-    return sendRequest("POST", path, clazz, adminApiKey, null);
-  }
-
-  protected <T> CompletableFuture<T> sendGetRequestAdmin(String path, Class<T> clazz) {
-    return sendRequest("GET", path, clazz, adminApiKey, null);
-  }
-
-  private <T> CompletableFuture<T> sendRequest(String method, String path, Class<T> clazz,
-                                               @Nullable String token, @Nullable String payload) {
+  protected <T> CompletableFuture<T> sendRequest(String method, String path, Class<T> clazz,
+                                                 @Nullable String token, @Nullable String payload) {
     HttpClient client = HttpClient.newHttpClient();
     HttpClient.Version version = getHttpClientVersion();
     log.debug("Using {}", version);
@@ -109,8 +87,7 @@ public class BaseRepository {
     log.debug("Request headers: " + request.headers());
 
     return client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
-      .thenApplyAsync(this::getBodyOpt, executor)
-      .thenApplyAsync(bodyOpt -> bodyOpt.map(body -> fromJson(body, clazz)).orElse(null), executor);
+      .thenApplyAsync(response -> getAndProcessBody(response, clazz), executor);
   }
 
   protected <T> T fromJson(String body, Class<T> clazz) {
@@ -118,27 +95,24 @@ public class BaseRepository {
       return null;
     }
 
-    ObjectMapper mapper = new ObjectMapper().registerModule(new JavaTimeModule());
     try {
-      return mapper.readValue(body, clazz);
+      return objectMapper.readValue(body, clazz);
     } catch (JsonProcessingException e) {
       log.error("Error parsing json: " + body, e);
-      return null;
+      throw new RuntimeException(e);
     }
   }
 
   protected String toJson(Object object) {
-    ObjectMapper mapper = new ObjectMapper().registerModule(new JavaTimeModule());
     try {
-      return mapper.writeValueAsString(object);
+      return objectMapper.writeValueAsString(object);
     } catch (JsonProcessingException e) {
-      log.error("Error parsing json: " + object, e);
-      return null;
+      log.error("Error creating json: " + object, e);
+      throw new RuntimeException(e);
     }
   }
 
-  @NotNull
-  private Optional<String> getBodyOpt(HttpResponse<String> response) throws APIException {
+  private <T> T getAndProcessBody(HttpResponse<String> response, Class<T> clazz) {
     log.debug("Response code: " + response.statusCode());
     log.debug("Response headers: " + response.headers());
     log.debug("Response body: " + response.body());
@@ -149,6 +123,10 @@ public class BaseRepository {
       throw exception;
     }
 
-    return Optional.of(response.body());
+    try {
+      return fromJson(response.body(), clazz);
+    } catch (Exception e) {
+      throw new APIException(response, e);
+    }
   }
 }

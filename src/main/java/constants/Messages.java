@@ -16,8 +16,8 @@ public class Messages {
   public static final String UNDEFINED_COMMAND = "Undefined command";
   public static final String ASK_FOR_WEEK_TO_SKIP = "Write week id to skip (year.number)";
   public static final String ASK_FOR_WEEK_TO_UNSKIP = "Write week id to unskip (year.number)";
-  public static final String UNKNOWN_ERROR = "Ha ocurrido un error no contemplado\\. Se ha enviado más información " +
-    "al administrador para resolver el problema\\.";
+  public static final String UNKNOWN_ERROR = "Ha ocurrido un error no contemplado\\. Se ha enviado m\u00E1s" +
+    " informaci\u00F3n al administrador para resolver el problema\\.";
   public static final String NO_TICKETS_FOUND = "No tickets found";
 
   private static class Callback implements SentCallback<Boolean> {

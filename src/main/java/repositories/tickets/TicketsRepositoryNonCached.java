@@ -3,7 +3,7 @@ package repositories.tickets;
 import com.google.inject.Inject;
 import config.ConfigRepository;
 import models.Ticket;
-import repositories.BaseRepository;
+import repositories.base.BaseNonAdminRepository;
 import security.Security;
 
 import java.util.Arrays;
@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
-public class TicketsRepositoryNonCached extends BaseRepository implements TicketsRepository {
+public class TicketsRepositoryNonCached extends BaseNonAdminRepository implements TicketsRepository {
   @Inject
   public TicketsRepositoryNonCached(ConfigRepository config, Security security, Executor executor) {
     super(config, security, executor);
