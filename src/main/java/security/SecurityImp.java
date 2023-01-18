@@ -6,7 +6,6 @@ import lombok.extern.slf4j.Slf4j;
 import models.User;
 import repositories.users.UsersRepository;
 
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 @Slf4j
@@ -20,7 +19,7 @@ public class SecurityImp implements Security {
   }
 
   public CompletableFuture<String> getUserApiKey(String userId) {
-    return getUsers()
+    return usersRepository.listUsers()
       .thenApply(users -> users.stream()
         .filter(user -> user.getId().equals(userId))
         .findFirst()
@@ -29,12 +28,8 @@ public class SecurityImp implements Security {
   }
 
   public CompletableFuture<Boolean> isAuthenticated(String userId) {
-    return getUsers()
+    return usersRepository.listUsers()
       .thenApply(users -> users.stream()
         .anyMatch(t -> t.getId().equals(userId)));
-  }
-
-  private CompletableFuture<List<User>> getUsers() {
-    return usersRepository.listUsers();
   }
 }
