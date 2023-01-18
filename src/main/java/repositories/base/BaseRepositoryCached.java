@@ -2,7 +2,6 @@ package repositories.base;
 
 import config.ConfigRepository;
 import lombok.extern.slf4j.Slf4j;
-import models.User;
 import services.RedisService;
 
 import java.util.List;
@@ -22,7 +21,7 @@ public class BaseRepositoryCached extends BaseRepository {
     this.modelName = modelName;
   }
 
-  private String getCacheKey(String modelName) {
+  public static String getCacheKeyFromModelName(String modelName) {
     return "api::" + modelName;
   }
 
@@ -33,7 +32,7 @@ public class BaseRepositoryCached extends BaseRepository {
 
   protected <T> CompletableFuture<List<T>> getFromCacheList(Callable<CompletableFuture<List<T>>> nonCachedCallable,
                                                             Class<T[]> targetClass, int cacheExpireSeconds, String modelName) {
-    String cacheKey = getCacheKey(modelName);
+    String cacheKey = getCacheKeyFromModelName(modelName);
     var result = redisService.get(cacheKey);
     if (result != null) {
       log.debug("Cache hit for " + modelName + " (key: " + cacheKey + ")");

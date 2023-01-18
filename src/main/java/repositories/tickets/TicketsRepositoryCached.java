@@ -4,7 +4,6 @@ import com.google.inject.Inject;
 import config.ConfigRepository;
 import lombok.extern.slf4j.Slf4j;
 import models.Ticket;
-import repositories.base.BaseAdminRepository;
 import repositories.base.BaseRepositoryCached;
 import services.RedisService;
 
@@ -13,7 +12,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
 import static constants.CacheConstants.TICKETS_CACHE_EXPIRE_SECONDS;
-import static constants.CacheConstants.TICKETS_REDIS_KEY_PREFIX;
 
 @Slf4j
 public class TicketsRepositoryCached extends BaseRepositoryCached implements TicketsRepository {
