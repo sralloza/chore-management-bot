@@ -4,8 +4,7 @@ import com.google.inject.Inject;
 import config.ConfigRepository;
 import lombok.extern.slf4j.Slf4j;
 import models.ChoreType;
-import repositories.BaseRepository;
-import security.Security;
+import repositories.base.BaseRepository;
 import services.RedisService;
 
 import java.util.List;
@@ -20,9 +19,9 @@ public class ChoreTypesRepositoryCached extends BaseRepository implements ChoreT
   private final ChoreTypesRepositoryNonCached choreTypesRepository;
 
   @Inject
-  public ChoreTypesRepositoryCached(ConfigRepository config, Security security, Executor executor,
-                                    RedisService redisService, ChoreTypesRepositoryNonCached choreTypesRepository) {
-    super(config, security, executor);
+  public ChoreTypesRepositoryCached(ConfigRepository config, Executor executor, RedisService redisService,
+                                    ChoreTypesRepositoryNonCached choreTypesRepository) {
+    super(config, executor);
     this.redisService = redisService;
     this.choreTypesRepository = choreTypesRepository;
   }

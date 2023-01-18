@@ -62,7 +62,7 @@ public class ChoreManagementServiceImp implements ChoreManagementService {
 
   @Override
   public CompletableFuture<Void> unSkipWeek(String userId, String weekId) {
-    return repository.unskipWeek(userId, weekId);
+    return repository.unSkipWeek(userId, weekId);
   }
 
   @Override

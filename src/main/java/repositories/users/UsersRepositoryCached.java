@@ -4,8 +4,7 @@ import com.google.inject.Inject;
 import config.ConfigRepository;
 import lombok.extern.slf4j.Slf4j;
 import models.User;
-import repositories.BaseRepository;
-import security.Security;
+import repositories.base.BaseRepository;
 import services.RedisService;
 
 import java.util.List;
@@ -21,9 +20,9 @@ public class UsersRepositoryCached extends BaseRepository implements UsersReposi
   private final UsersRepositoryNonCached usersRepository;
 
   @Inject
-  public UsersRepositoryCached(ConfigRepository config, Security security, Executor executor,
-                               RedisService redisService, UsersRepositoryNonCached usersRepository) {
-    super(config, security, executor);
+  public UsersRepositoryCached(ConfigRepository config, Executor executor, RedisService redisService,
+                               UsersRepositoryNonCached usersRepository) {
+    super(config, executor);
     this.redisService = redisService;
     this.usersRepository = usersRepository;
   }

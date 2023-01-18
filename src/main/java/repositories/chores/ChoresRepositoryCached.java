@@ -5,8 +5,7 @@ import config.ConfigRepository;
 import lombok.extern.slf4j.Slf4j;
 import models.Chore;
 import models.WeeklyChores;
-import repositories.BaseRepository;
-import security.Security;
+import repositories.base.BaseRepository;
 import services.RedisService;
 
 import java.util.List;
@@ -24,9 +23,9 @@ public class ChoresRepositoryCached extends BaseRepository implements ChoresRepo
   private final ChoresRepositoryNonCached choresRepository;
 
   @Inject
-  public ChoresRepositoryCached(ConfigRepository config, Security security, Executor executor,
-                                RedisService redisService, ChoresRepositoryNonCached choresRepository) {
-    super(config, security, executor);
+  public ChoresRepositoryCached(ConfigRepository config, Executor executor, RedisService redisService,
+                                ChoresRepositoryNonCached choresRepository) {
+    super(config, executor);
     this.redisService = redisService;
     this.choresRepository = choresRepository;
   }

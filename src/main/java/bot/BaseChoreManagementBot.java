@@ -80,7 +80,8 @@ public abstract class BaseChoreManagementBot extends AbilityBot {
         } else {
           sendMessage("You don't have permission to execute this action", chatId, false);
         }
-      }, executor);
+      }, executor)
+      .handleAsync(exceptionHandler(chatId));
   }
 
   protected void handleException(Exception e, String chatId) {
