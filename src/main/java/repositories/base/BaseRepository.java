@@ -7,8 +7,6 @@ import com.google.inject.Singleton;
 import config.ConfigRepository;
 import exceptions.APIException;
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
-import security.Security;
 
 import javax.annotation.Nullable;
 import java.net.URI;
@@ -43,8 +41,8 @@ public class BaseRepository {
     return http2 ? HttpClient.Version.HTTP_2 : HttpClient.Version.HTTP_1_1;
   }
 
-  protected  <T> CompletableFuture<T> sendRequest(String method, String path, Class<T> clazz,
-                                               @Nullable String token, @Nullable String payload) {
+  protected <T> CompletableFuture<T> sendRequest(String method, String path, Class<T> clazz,
+                                                 @Nullable String token, @Nullable String payload) {
     HttpClient client = HttpClient.newHttpClient();
     HttpClient.Version version = getHttpClientVersion();
     log.debug("Using {}", version);
@@ -89,8 +87,7 @@ public class BaseRepository {
     log.debug("Request headers: " + request.headers());
 
     return client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
-      .thenApplyAsync(this::getBodyOpt, executor)
-      .thenApplyAsync(bodyOpt -> bodyOpt.map(body -> fromJson(body, clazz)).orElse(null), executor);
+      .thenApplyAsync(response -> getAndProcessBody(response, clazz), executor);
   }
 
   protected <T> T fromJson(String body, Class<T> clazz) {
@@ -115,8 +112,7 @@ public class BaseRepository {
     }
   }
 
-  @NotNull
-  private Optional<String> getBodyOpt(HttpResponse<String> response) throws APIException {
+  private <T> T getAndProcessBody(HttpResponse<String> response, Class<T> clazz) {
     log.debug("Response code: " + response.statusCode());
     log.debug("Response headers: " + response.headers());
     log.debug("Response body: " + response.body());
@@ -127,6 +123,10 @@ public class BaseRepository {
       throw exception;
     }
 
-    return Optional.of(response.body());
+    try {
+      return fromJson(response.body(), clazz);
+    } catch (Exception e) {
+      throw new APIException(response, e);
+    }
   }
 }

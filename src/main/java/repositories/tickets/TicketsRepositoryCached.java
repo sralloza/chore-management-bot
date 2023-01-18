@@ -5,6 +5,7 @@ import config.ConfigRepository;
 import lombok.extern.slf4j.Slf4j;
 import models.Ticket;
 import repositories.base.BaseAdminRepository;
+import repositories.base.BaseRepositoryCached;
 import services.RedisService;
 
 import java.util.List;
@@ -15,31 +16,20 @@ import static constants.CacheConstants.TICKETS_CACHE_EXPIRE_SECONDS;
 import static constants.CacheConstants.TICKETS_REDIS_KEY_PREFIX;
 
 @Slf4j
-public class TicketsRepositoryCached extends BaseAdminRepository implements TicketsRepository {
+public class TicketsRepositoryCached extends BaseRepositoryCached implements TicketsRepository {
   private final RedisService redisService;
   private final TicketsRepositoryNonCached ticketsRepository;
 
   @Inject
   public TicketsRepositoryCached(ConfigRepository config, Executor executor, RedisService redisService,
                                  TicketsRepositoryNonCached usersRepository) {
-    super(config, executor);
+    super(config, executor, redisService, "tickets");
     this.redisService = redisService;
     this.ticketsRepository = usersRepository;
   }
 
   @Override
   public CompletableFuture<List<Ticket>> listTickets(String userId) {
-    var result = redisService.get(TICKETS_REDIS_KEY_PREFIX);
-    if (result != null) {
-      log.debug("Cache hit for tickets");
-      return CompletableFuture.completedFuture(fromJson(result, Ticket[].class))
-        .thenApply(List::of);
-    }
-    log.debug("Cache miss for tickets");
-    return ticketsRepository.listTickets(userId)
-      .thenApply(tickets -> {
-        redisService.setex(TICKETS_REDIS_KEY_PREFIX, TICKETS_CACHE_EXPIRE_SECONDS, toJson(tickets));
-        return tickets;
-      });
+    return getFromCacheList(() -> ticketsRepository.listTickets(userId), Ticket[].class, TICKETS_CACHE_EXPIRE_SECONDS);
   }
 }

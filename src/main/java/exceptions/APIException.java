@@ -17,6 +17,12 @@ public class APIException extends RuntimeException {
   private Integer statusCode;
   private String xCorrelator;
   private String apiKey;
+  private Exception otherException;
+
+  public APIException(HttpResponse<String> response, Exception exc) {
+    this(response);
+    this.otherException = exc;
+  }
 
   public APIException(HttpResponse<String> response) {
     super(Generic.getResponseMessage(response));
