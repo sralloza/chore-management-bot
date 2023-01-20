@@ -1,7 +1,7 @@
 package repositories.choretypes;
 
 import com.google.inject.Inject;
-import config.ConfigRepository;
+import com.typesafe.config.Config;
 import models.ChoreType;
 import repositories.base.BaseAdminRepository;
 
@@ -12,7 +12,7 @@ import java.util.concurrent.Executor;
 
 public class ChoreTypesRepositoryNonCached extends BaseAdminRepository implements ChoreTypesRepository {
   @Inject
-  public ChoreTypesRepositoryNonCached(ConfigRepository config, Executor executor) {
+  public ChoreTypesRepositoryNonCached(Config config, Executor executor) {
     super(config, executor);
   }
 

@@ -1,10 +1,9 @@
 package repositories.choretypes;
 
 import com.google.inject.Inject;
-import config.ConfigRepository;
+import com.typesafe.config.Config;
 import lombok.extern.slf4j.Slf4j;
 import models.ChoreType;
-import repositories.base.BaseRepository;
 import repositories.base.BaseRepositoryCached;
 import services.RedisService;
 
@@ -16,14 +15,12 @@ import static constants.CacheConstants.CHORE_TYPES_CACHE_EXPIRE_SECONDS;
 
 @Slf4j
 public class ChoreTypesRepositoryCached extends BaseRepositoryCached implements ChoreTypesRepository {
-  private final RedisService redisService;
   private final ChoreTypesRepositoryNonCached choreTypesRepository;
 
   @Inject
-  public ChoreTypesRepositoryCached(ConfigRepository config, Executor executor, RedisService redisService,
+  public ChoreTypesRepositoryCached(Config config, Executor executor, RedisService redisService,
                                     ChoreTypesRepositoryNonCached choreTypesRepository) {
     super(config, executor, redisService, "choreTypes");
-    this.redisService = redisService;
     this.choreTypesRepository = choreTypesRepository;
   }
 

@@ -1,7 +1,7 @@
 package repositories;
 
 import com.google.inject.Inject;
-import config.ConfigRepository;
+import com.typesafe.config.Config;
 import repositories.base.BaseNonAdminRepository;
 import security.Security;
 
@@ -10,7 +10,7 @@ import java.util.concurrent.Executor;
 
 public class ChoreManagementRepositoryImp extends BaseNonAdminRepository implements ChoreManagementRepository {
   @Inject
-  public ChoreManagementRepositoryImp(ConfigRepository config, Security security, Executor executor) {
+  public ChoreManagementRepositoryImp(Config config, Security security, Executor executor) {
     super(config, security, executor);
   }
 

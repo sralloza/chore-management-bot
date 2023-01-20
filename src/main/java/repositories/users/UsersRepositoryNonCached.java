@@ -1,7 +1,7 @@
 package repositories.users;
 
 import com.google.inject.Inject;
-import config.ConfigRepository;
+import com.typesafe.config.Config;
 import models.User;
 import repositories.base.BaseAdminRepository;
 
@@ -12,7 +12,7 @@ import java.util.concurrent.Executor;
 
 public class UsersRepositoryNonCached extends BaseAdminRepository implements UsersRepository {
   @Inject
-  public UsersRepositoryNonCached(ConfigRepository config, Executor executor) {
+  public UsersRepositoryNonCached(Config config, Executor executor) {
     super(config, executor);
   }
 

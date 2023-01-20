@@ -3,7 +3,7 @@ package repositories.base;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.google.inject.Singleton;
-import config.ConfigRepository;
+import com.typesafe.config.Config;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Set;
@@ -18,7 +18,7 @@ public class BaseAdminRepository extends BaseRepository {
   protected final Executor executor;
   protected final ObjectMapper objectMapper;
 
-  public BaseAdminRepository(ConfigRepository config, Executor executor) {
+  public BaseAdminRepository(Config config, Executor executor) {
     super(config, executor);
     this.adminApiKey = config.getString("api.adminApiKey");
     this.executor = executor;

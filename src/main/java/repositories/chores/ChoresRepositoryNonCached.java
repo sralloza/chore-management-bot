@@ -1,7 +1,7 @@
 package repositories.chores;
 
 import com.google.inject.Inject;
-import config.ConfigRepository;
+import com.typesafe.config.Config;
 import models.Chore;
 import models.WeeklyChores;
 import repositories.base.BaseNonAdminRepository;
@@ -14,7 +14,7 @@ import java.util.concurrent.Executor;
 
 public class ChoresRepositoryNonCached extends BaseNonAdminRepository implements ChoresRepository {
   @Inject
-  public ChoresRepositoryNonCached(ConfigRepository config, Security security, Executor executor) {
+  public ChoresRepositoryNonCached(Config config, Security security, Executor executor) {
     super(config, security, executor);
   }
 

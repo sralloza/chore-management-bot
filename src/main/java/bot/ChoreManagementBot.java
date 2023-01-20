@@ -2,7 +2,7 @@ package bot;
 
 import com.google.inject.Inject;
 import com.typesafe.config.Config;
-import constants.Messages;
+import constants.BotMessages;
 import constants.UserMessages;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -12,23 +12,18 @@ import models.ChoreType;
 import models.QueryType;
 import org.telegram.abilitybots.api.objects.Ability;
 import org.telegram.abilitybots.api.objects.MessageContext;
-import org.telegram.telegrambots.meta.api.methods.BotApiMethod;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
-import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
-import org.telegram.telegrambots.meta.exceptions.TelegramApiRequestException;
-import org.telegram.telegrambots.meta.updateshandlers.SentCallback;
 import security.Security;
 import services.ChoreManagementService;
+import services.MessagesService;
 import services.RedisService;
 import services.latex.LatexService;
-import utils.Normalizers;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
@@ -41,26 +36,14 @@ public class ChoreManagementBot extends BaseChoreManagementBot {
   private static final String WEEKLY_TASKS_TABLE_PNG = "weekly-tasks-table.png";
   private static final String TICKETS_TABLE_PNG = "tickets-table.png";
 
-  private final Long creatorId;
-  private final Keyboards keyboards;
-
   @Getter
   private Integer menuMessage;
 
   @Inject
-  public ChoreManagementBot(Config config, Keyboards keyboards, ChoreManagementService choreManagementService,
+  public ChoreManagementBot(Config config, ChoreManagementService choreManagementService,
                             LatexService latexService, Security security, RedisService redisService,
-                            Executor executor) {
-    super(config.getString("telegram.bot.token"), config.getString("telegram.bot.username"),
-      keyboards, choreManagementService, security, latexService, redisService, executor);
-
-    creatorId = config.getLong("telegram.creatorID");
-    this.keyboards = keyboards;
-  }
-
-  @Override
-  public long creatorId() {
-    return creatorId;
+                            MessagesService messagesService, Executor executor) {
+    super(config, choreManagementService, security, latexService, redisService, messagesService, executor);
   }
 
   public Ability processMsg() {
@@ -79,7 +62,8 @@ public class ChoreManagementBot extends BaseChoreManagementBot {
       .info("Starts the bot")
       .locality(USER)
       .privacy(PUBLIC)
-      .action(ctx -> runCheckingUserRegistered(ctx, this::sendMenuAsync))
+      .action(ctx -> runCheckingUserRegistered(ctx, ctx1 -> CompletableFuture.runAsync(
+        () -> sendMenu(ctx1), executor)))
       .enableStats()
       .build();
   }
@@ -99,14 +83,14 @@ public class ChoreManagementBot extends BaseChoreManagementBot {
             .handleAsync((result, throwable) -> {
               if (throwable != null) {
                 log.error("Error creating weekly chores", throwable);
-                handleException((Exception) throwable, chatId);
+                helper.handleException((Exception) throwable, chatId);
                 return null;
               }
-              sendMessage("Weekly chores created for week " + weekId, chatId, false);
+              helper.sendMessage(String.format(BotMessages.WEEKLY_CHORES_CREATED, weekId), chatId, false);
               return null;
             }, executor);
         } else {
-          sendMessage("You are not authorized to create weekly chores", chatId, false);
+          helper.sendMessage(BotMessages.WEEKLY_CHORES_FORBIDDEN_CREATE, chatId, false);
         }
       })
       .enableStats()
@@ -116,13 +100,11 @@ public class ChoreManagementBot extends BaseChoreManagementBot {
   public boolean startFlowSelectTask(MessageContext ctx, List<Chore> tasks, List<ChoreType> choreTypes) {
     var chatId = ctx.chatId().toString();
     if (tasks.size() == 0) {
-      sendMessageMarkdown(Messages.NO_PENDING_TASKS, chatId);
+      helper.sendMessage(BotMessages.NO_PENDING_TASKS, chatId, true);
       return false;
     }
 
-    Optional.ofNullable(redisService.getMessage(chatId, QueryType.COMPLETE_TASK))
-      .ifPresent(messageId -> deleteMessage(chatId, messageId));
-
+    helper.removeBotQueryMessageIfExists(chatId, QueryType.COMPLETE_TASK);
     Map<String, String> choreTypeMap = choreTypes.stream()
       .collect(Collectors.toMap(ChoreType::getId, ChoreType::getName));
 
@@ -143,12 +125,12 @@ public class ChoreManagementBot extends BaseChoreManagementBot {
       .collect(Collectors.toList()));
     message.setReplyMarkup(keyboard);
     message.setChatId(ctx.chatId().toString());
-    message.setText(Messages.SELECT_TASK_TO_COMPLETE);
+    message.setText(BotMessages.SELECT_TASK_TO_COMPLETE);
     try {
       var messageId = sender.execute(message).getMessageId();
-      redisService.saveMessage(ctx.chatId(), QueryType.COMPLETE_TASK, messageId);
+      messagesService.saveMessageId(ctx.chatId(), QueryType.COMPLETE_TASK, messageId);
     } catch (TelegramApiException e) {
-      e.printStackTrace();
+      helper.handleException(e, chatId, QueryType.COMPLETE_TASK);
     }
 
     return true;
@@ -174,32 +156,32 @@ public class ChoreManagementBot extends BaseChoreManagementBot {
       case UserMessages.TICKETS:
         choreTypesFuture = service.listChoreTypes();
         service.listTickets(chatId)
-          .thenCombine(choreTypesFuture, Normalizers::normalizeTickets)
-          .thenAcceptAsync(tickets -> sendTable(tickets, chatId, "ticketsTable", Messages.NO_TICKETS_FOUND), executor)
-          .handleAsync(exceptionHandler(chatId), executor);
+          .thenCombine(choreTypesFuture, (ticketList, choreTypeList) -> latexHelper.sendTicketsTable(
+            ticketList, choreTypeList, chatId))
+          .handleAsync(helper.exceptionHandler(chatId), executor);
         break;
       case UserMessages.TASKS:
         choreTypesFuture = service.listChoreTypes();
         service.getWeeklyChores(chatId)
-          .thenCombine(choreTypesFuture, Normalizers::normalizeWeeklyChores)
-          .thenAcceptAsync(tasks -> sendTable(tasks, chatId, "weeklyTasksTable", Messages.NO_TASKS), executor)
-          .handleAsync(exceptionHandler(chatId), executor);
+          .thenCombine(choreTypesFuture, ((weeklyChores, choreTypes) -> latexHelper.sendWeeklyChoresTable(
+            weeklyChores, choreTypes, chatId)))
+          .handleAsync(helper.exceptionHandler(chatId), executor);
         break;
       case UserMessages.COMPLETE_TASK:
         choreTypesFuture = service.listChoreTypes();
         service.listChores(chatId)
           .thenCombineAsync(choreTypesFuture, (choreList, choreTypeList) ->
             startFlowSelectTask(ctx, choreList, choreTypeList), executor)
-          .handleAsync(exceptionHandler(chatId), executor);
+          .handleAsync(helper.exceptionHandler(chatId), executor);
         break;
       case UserMessages.SKIP:
-        silent.forceReply(Messages.ASK_FOR_WEEK_TO_SKIP, ctx.chatId());
+        silent.forceReply(BotMessages.ASK_FOR_WEEK_TO_SKIP, ctx.chatId());
         break;
       case UserMessages.UNSKIP:
-        silent.forceReply(Messages.ASK_FOR_WEEK_TO_UNSKIP, ctx.chatId());
+        silent.forceReply(BotMessages.ASK_FOR_WEEK_TO_UNSKIP, ctx.chatId());
         break;
       default:
-        sendMessageMarkdown("Undefined command", chatId);
+        helper.sendMessage(BotMessages.UNDEFINED_COMMAND, chatId, true);
         break;
     }
   }
@@ -210,59 +192,48 @@ public class ChoreManagementBot extends BaseChoreManagementBot {
     var chatId = ctx.chatId().toString();
 
     switch (replyMsg) {
-      case Messages.ASK_FOR_WEEK_TO_SKIP:
+      case BotMessages.ASK_FOR_WEEK_TO_SKIP:
         service.skipWeek(chatId, userMessage)
-          .handle(replyHandler(ctx, "Week skipped: " + userMessage));
+          .handle(helper.replyHandler(ctx, String.format(BotMessages.WEEK_SKIPPED, userMessage)));
         break;
-      case Messages.ASK_FOR_WEEK_TO_UNSKIP:
+      case BotMessages.ASK_FOR_WEEK_TO_UNSKIP:
         service.unSkipWeek(chatId, userMessage)
-          .handle(replyHandler(ctx, "Week unskipped: " + userMessage));
+          .handle(helper.replyHandler(ctx, String.format(BotMessages.WEEK_UNSKIPPED, userMessage)));
         break;
       default:
-        sendMessage(Messages.UNDEFINED_COMMAND, chatId, false);
+        helper.sendMessage(BotMessages.UNDEFINED_COMMAND, chatId, false);
         break;
     }
   }
 
   private void processQueryData(MessageContext ctx) {
     String data = ctx.update().getCallbackQuery().getData();
+    log.debug("Received query data: {}", data);
     CallbackQueryData callbackData = CallbackQueryData.decode(data);
+
     String queryId = ctx.update().getCallbackQuery().getId();
     String chatId = ctx.chatId().toString();
 
-    switch (callbackData.getType()) {
-      case COMPLETE_TASK:
-        service.completeChore(chatId, callbackData.getWeekId(), callbackData.getChoreType())
-          .handleAsync(callbackQueryHandler(ctx, queryId, Messages.TASK_COMPLETED, QueryType.COMPLETE_TASK), executor);
-        break;
-      default:
-        sendMessage(Messages.UNDEFINED_COMMAND, chatId, false);
-        break;
+    if (callbackData.getType() == QueryType.COMPLETE_TASK) {
+      service.completeChore(chatId, callbackData.getWeekId(), callbackData.getChoreType())
+        .handleAsync(helper.callbackQueryHandler(ctx, queryId, BotMessages.TASK_COMPLETED, QueryType.COMPLETE_TASK), executor);
+    } else {
+      helper.sendMessage(BotMessages.UNDEFINED_COMMAND, chatId, false);
     }
   }
 
-  private void sendMenuAsync(MessageContext ctx) {
+  private void sendMenu(MessageContext ctx) {
     SendMessage msg = new SendMessage();
-    msg.setText(Messages.START_MSG);
+    msg.setText(BotMessages.START_MSG);
     msg.disableNotification();
     msg.enableMarkdownV2(true);
     msg.setChatId(Long.toString(ctx.chatId()));
-    msg.setReplyMarkup(keyboards.getMainMenuKeyboard());
+    msg.setReplyMarkup(Keyboards.getMainMenuKeyboard());
 
-    SentCallback<Message> callback = new SentCallback<>() {
-      @Override
-      public void onResult(BotApiMethod method, Message response) {
-        menuMessage = response.getMessageId();
-      }
-
-      @Override
-      public void onError(BotApiMethod method, TelegramApiRequestException apiException) {
-      }
-
-      @Override
-      public void onException(BotApiMethod method, Exception exception) {
-      }
-    };
-    silent.executeAsync(msg, callback);
+    try {
+      sender.execute(msg);
+    } catch (TelegramApiException e) {
+      helper.handleException(e, ctx.chatId().toString());
+    }
   }
 }

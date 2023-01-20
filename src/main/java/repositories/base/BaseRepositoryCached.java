@@ -1,6 +1,6 @@
 package repositories.base;
 
-import config.ConfigRepository;
+import com.typesafe.config.Config;
 import lombok.extern.slf4j.Slf4j;
 import services.RedisService;
 
@@ -15,7 +15,7 @@ public class BaseRepositoryCached extends BaseRepository {
   private final RedisService redisService;
   private final String modelName;
 
-  public BaseRepositoryCached(ConfigRepository config, Executor executor, RedisService redisService, String modelName) {
+  public BaseRepositoryCached(Config config, Executor executor, RedisService redisService, String modelName) {
     super(config, executor);
     this.redisService = redisService;
     this.modelName = modelName;
