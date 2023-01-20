@@ -6,7 +6,7 @@ import lombok.Data;
 import java.util.List;
 
 @Data
-@JsonIgnoreProperties(value = { "ctx" })
+@JsonIgnoreProperties(value = {"ctx"})
 public class ApiSingleValidationError {
   private List<String> loc;
   private String msg;

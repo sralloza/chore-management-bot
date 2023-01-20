@@ -1,7 +1,7 @@
 package repositories.users;
 
 import com.google.inject.Inject;
-import config.ConfigRepository;
+import com.typesafe.config.Config;
 import lombok.extern.slf4j.Slf4j;
 import models.User;
 import repositories.base.BaseRepositoryCached;
@@ -15,14 +15,12 @@ import static constants.CacheConstants.USERS_CACHE_EXPIRE_SECONDS;
 
 @Slf4j
 public class UsersRepositoryCached extends BaseRepositoryCached implements UsersRepository {
-  private final RedisService redisService;
   private final UsersRepositoryNonCached usersRepository;
 
   @Inject
-  public UsersRepositoryCached(ConfigRepository config, Executor executor, RedisService redisService,
+  public UsersRepositoryCached(Config config, Executor executor, RedisService redisService,
                                UsersRepositoryNonCached usersRepository) {
     super(config, executor, redisService, "users");
-    this.redisService = redisService;
     this.usersRepository = usersRepository;
   }
 

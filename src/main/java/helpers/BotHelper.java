@@ -5,32 +5,33 @@ import constants.BotMessages;
 import exceptions.APIException;
 import lombok.extern.slf4j.Slf4j;
 import models.QueryType;
+import org.telegram.abilitybots.api.bot.AbilityBot;
 import org.telegram.abilitybots.api.objects.MessageContext;
 import org.telegram.abilitybots.api.sender.MessageSender;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
+import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import services.MessagesService;
 
-import java.util.Optional;
+import java.io.File;
 import java.util.function.BiFunction;
 
 @Slf4j
-public class MessagesHelper {
+public class BotHelper {
+  private final AbilityBot bot;
   private final MessageSender sender;
   private final MessagesService messagesService;
   private final long creatorId;
 
-  public MessagesHelper(MessageSender sender, MessagesService messagesService, long creatorId) {
-    this.sender = sender;
+  public BotHelper(AbilityBot bot, MessagesService messagesService, long creatorId) {
+    this.bot = bot;
+    this.sender = bot.sender();
     this.messagesService = messagesService;
     this.creatorId = creatorId;
-  }
-
-  public void sendMessageMarkdown(String msgStr, String chatId) {
-    sendMessage(msgStr, chatId, true);
   }
 
   public void sendMessage(String msgStr, String chatId, boolean markdown) {
@@ -48,6 +49,44 @@ public class MessagesHelper {
       sender.execute(msg);
     } catch (TelegramApiException e) {
       handleException(e, chatId);
+    }
+  }
+
+  public void sendImage(String chatId, File file) {
+    InputFile inputFile = new InputFile(file);
+    SendPhoto message = new SendPhoto();
+    message.setPhoto(inputFile);
+    message.setChatId(chatId);
+    try {
+      bot.execute(message);
+    } catch (TelegramApiException e) {
+      handleException(e, chatId);
+    }
+  }
+
+  public void deleteMessage(String chatId, Integer messageId) {
+    log.debug("Deleting message {} in chat {}", messageId, chatId);
+    var message = new DeleteMessage();
+    message.setMessageId(messageId);
+    message.setChatId(chatId);
+    try {
+      sender.execute(message);
+    } catch (TelegramApiException e) {
+      log.warn("Error deleting message", e);
+    }
+  }
+
+  private void editMessage(Long chatId, Integer messageId, String text) {
+    log.debug("Editing message {} in chat {} with text '{}'", messageId, chatId, text);
+    var message = new EditMessageText();
+    message.setMessageId(messageId);
+    message.setChatId(chatId);
+    message.setText(text);
+    try {
+      sender.execute(message);
+    } catch (TelegramApiException e) {
+      log.error("Error editing message", e);
+      handleException(e, chatId.toString());
     }
   }
 
@@ -70,32 +109,6 @@ public class MessagesHelper {
     } catch (TelegramApiException e) {
       handleException(e, chatId);
       log.error("Error answering callback query", e);
-    }
-  }
-
-  public void deleteMessage(String chatId, Integer messageId) {
-    log.debug("Deleting message {} in chat {}", messageId, chatId);
-    var message = new DeleteMessage();
-    message.setMessageId(messageId);
-    message.setChatId(chatId);
-    try {
-      sender.execute(message);
-    } catch (TelegramApiException e) {
-      log.warn("Error deleting message", e);
-    }
-  }
-
-  protected void editMessage(Long chatId, Integer messageId, String text) {
-    log.debug("Editing message {} in chat {} with text '{}'", messageId, chatId, text);
-    var message = new EditMessageText();
-    message.setMessageId(messageId);
-    message.setChatId(chatId);
-    message.setText(text);
-    try {
-      sender.execute(message);
-    } catch (TelegramApiException e) {
-      log.error("Error editing message", e);
-      handleException(e, chatId.toString());
     }
   }
 

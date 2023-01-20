@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.google.inject.Singleton;
-import config.ConfigRepository;
+import com.typesafe.config.Config;
 import exceptions.APIException;
 import lombok.extern.slf4j.Slf4j;
 
@@ -30,7 +30,7 @@ public class BaseRepository {
   protected final Executor executor;
   protected final ObjectMapper objectMapper;
 
-  public BaseRepository(ConfigRepository config, Executor executor) {
+  public BaseRepository(Config config, Executor executor) {
     this.baseURL = config.getString("api.baseURL");
     this.http2 = config.getBoolean("api.http2");
     this.executor = executor;

@@ -1,7 +1,7 @@
 package repositories.tickets;
 
 import com.google.inject.Inject;
-import config.ConfigRepository;
+import com.typesafe.config.Config;
 import lombok.extern.slf4j.Slf4j;
 import models.Ticket;
 import repositories.base.BaseRepositoryCached;
@@ -15,14 +15,12 @@ import static constants.CacheConstants.TICKETS_CACHE_EXPIRE_SECONDS;
 
 @Slf4j
 public class TicketsRepositoryCached extends BaseRepositoryCached implements TicketsRepository {
-  private final RedisService redisService;
   private final TicketsRepositoryNonCached ticketsRepository;
 
   @Inject
-  public TicketsRepositoryCached(ConfigRepository config, Executor executor, RedisService redisService,
+  public TicketsRepositoryCached(Config config, Executor executor, RedisService redisService,
                                  TicketsRepositoryNonCached usersRepository) {
     super(config, executor, redisService, "tickets");
-    this.redisService = redisService;
     this.ticketsRepository = usersRepository;
   }
 

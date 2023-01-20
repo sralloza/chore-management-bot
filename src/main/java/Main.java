@@ -8,15 +8,15 @@ import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 
 @Slf4j
 public class Main {
-    public static void main(String[] args) {
-        Injector injector = Guice.createInjector(new Module());
-        ChoreManagementBot bot = injector.getInstance(ChoreManagementBot.class);
+  public static void main(String[] args) {
+    Injector injector = Guice.createInjector(new Module());
+    ChoreManagementBot bot = injector.getInstance(ChoreManagementBot.class);
 
-        try {
-            TelegramBotsApi telegramBotsApi = new TelegramBotsApi(DefaultBotSession.class);
-            telegramBotsApi.registerBot(bot);
-        } catch (TelegramApiException e) {
-            log.error("Error starting bot", e);
-        }
+    try {
+      TelegramBotsApi telegramBotsApi = new TelegramBotsApi(DefaultBotSession.class);
+      telegramBotsApi.registerBot(bot);
+    } catch (TelegramApiException e) {
+      log.error("Error starting bot", e);
     }
+  }
 }

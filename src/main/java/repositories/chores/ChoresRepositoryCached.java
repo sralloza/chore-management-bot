@@ -1,7 +1,7 @@
 package repositories.chores;
 
 import com.google.inject.Inject;
-import config.ConfigRepository;
+import com.typesafe.config.Config;
 import lombok.extern.slf4j.Slf4j;
 import models.Chore;
 import models.WeeklyChores;
@@ -23,7 +23,7 @@ public class ChoresRepositoryCached extends BaseRepositoryCached implements Chor
   private final ChoresRepositoryNonCached choresRepository;
 
   @Inject
-  public ChoresRepositoryCached(ConfigRepository config, Executor executor, RedisService redisService,
+  public ChoresRepositoryCached(Config config, Executor executor, RedisService redisService,
                                 ChoresRepositoryNonCached choresRepository) {
     super(config, executor, redisService, "chores");
     this.redisService = redisService;

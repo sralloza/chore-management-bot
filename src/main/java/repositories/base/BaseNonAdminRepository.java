@@ -1,6 +1,6 @@
 package repositories.base;
 
-import config.ConfigRepository;
+import com.typesafe.config.Config;
 import lombok.extern.slf4j.Slf4j;
 import security.Security;
 
@@ -14,7 +14,7 @@ public class BaseNonAdminRepository extends BaseAdminRepository {
   private final Security security;
   protected final Executor executor;
 
-  public BaseNonAdminRepository(ConfigRepository config, Security security, Executor executor) {
+  public BaseNonAdminRepository(Config config, Security security, Executor executor) {
     super(config, executor);
     this.security = security;
     this.executor = executor;
