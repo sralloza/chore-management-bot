@@ -45,38 +45,4 @@ public class RedisService {
     public String get(String key) {
         return jedis.get(key);
     }
-
-    public void saveMessage(Long chatId, QueryType type, Integer messageId) {
-        String key = String.format("%s:%s", chatId, type);
-        log.debug("Saving message {} with key {}", messageId, key);
-        try {
-            jedis.set(key, messageId.toString());
-        } catch (JedisConnectionException e) {
-            log.error("Redis is not connected", e);
-        }
-    }
-
-    public Integer getMessage(String chatId, QueryType type) {
-        if (type == null) {
-            return null;
-        }
-        
-        String key = String.format("%s:%s", chatId, type);
-        log.debug("Getting message with key {}", key);
-        String result;
-        try {
-            result = jedis.get(key);
-            log.debug("Result: {}", result);
-        } catch (JedisConnectionException e) {
-            log.error("Redis is not connected", e);
-            return null;
-        }
-        if (result != null) {
-            log.debug("Deleting key {}", key);
-            jedis.del(key);
-            log.debug("Key {} deleted", key);
-            return Integer.parseInt(result);
-        }
-        return null;
-    }
 }
