@@ -42,7 +42,7 @@ public class BaseRepository {
   protected <T> CompletableFuture<T> sendRequest(String method, String path, Class<T> clazz,
                                                  @Nullable String token, @Nullable String payload) {
 
-    RequestBody body = payload != null ? RequestBody.create(payload, mediaType) : RequestBody.create("", null);
+    RequestBody body = Objects.nonNull(payload) ? RequestBody.create(payload, mediaType) : RequestBody.create("", null);
     Request.Builder requestBuilder = new Request.Builder()
       .url(baseURL + path)
       .header("User-Agent", "ChoreManagement/1.0")
@@ -77,7 +77,7 @@ public class BaseRepository {
   }
 
   protected <T> T fromJson(String body, Class<T> clazz) {
-    if (clazz == null) {
+    if (Objects.isNull(clazz)) {
       return null;
     }
 
@@ -99,7 +99,7 @@ public class BaseRepository {
   }
 
   private Optional<String> processBody(@Nullable ResponseBody body) {
-    if (body == null) {
+    if (Objects.isNull(body)) {
       return Optional.empty();
     }
     try {
