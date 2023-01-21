@@ -23,6 +23,7 @@ import static org.mockito.Mockito.when;
 public class TicketsRepositoryTest extends TestRepositoryBase {
   private static final String USER_ID = "userId";
   private static final String INVALID_USER_ID = "invalidUserId";
+  public static final String TICKETS_URL = "/api/v1/tickets";
   private TicketsRepositoryNonCached repository;
 
   @Mock
@@ -42,7 +43,7 @@ public class TicketsRepositoryTest extends TestRepositoryBase {
   @Test
   public void listTicketsEmpty() throws ExecutionException, InterruptedException {
     // Given
-    setServerRoutes(Map.of("/api/v1/tickets", mockResponse(200, "[]")));
+    setServerRoutes(Map.of(TICKETS_URL, mockResponse(200, "[]")));
 
     // When
     List<Ticket> result = repository.listTickets(USER_ID).get();
@@ -54,7 +55,7 @@ public class TicketsRepositoryTest extends TestRepositoryBase {
   @Test
   public void listTicketsNotEmpty() throws ExecutionException, InterruptedException {
     // Given
-    setServerRoutes(Map.of("/api/v1/tickets", mockResponse(200,
+    setServerRoutes(Map.of(TICKETS_URL, mockResponse(200,
       "[{\"description\": \"description\",\"id\": \"id\",\"name\":\"name\",\"tickets_by_user_id\":{\"user-a\":0," +
         "\"user-b\":0},\"tickets_by_user_name\":{\"username-a\":0,\"username-b\":0}}]")));
 
@@ -74,7 +75,7 @@ public class TicketsRepositoryTest extends TestRepositoryBase {
   @Test
   public void listTicketsUserNotFound() {
     // Given
-    setServerRoutes(Map.of("/api/v1/tickets", mockResponse(200, "xxx")));
+    setServerRoutes(Map.of(TICKETS_URL, mockResponse(200, "xxx")));
 
     // When
     CompletableFuture<?> result = repository.listTickets(INVALID_USER_ID);
@@ -86,9 +87,9 @@ public class TicketsRepositoryTest extends TestRepositoryBase {
   }
 
   @Test
-  public void server403() {
+  public void listTickets403() {
     // Given
-    setServerRoutes(Map.of("/api/v1/tickets", mockResponse(403, "{\"detail\": \"Admin access required\"}")));
+    setServerRoutes(Map.of(TICKETS_URL, mockResponse(403, "{\"detail\": \"Admin access required\"}")));
 
     // When
     CompletableFuture<?> result = repository.listTickets(USER_ID);
@@ -101,9 +102,9 @@ public class TicketsRepositoryTest extends TestRepositoryBase {
   }
 
   @Test
-  public void serverInvalidData() {
+  public void listTicketsInvalidData() {
     // Given
-    setServerRoutes(Map.of("/api/v1/tickets", mockResponse(200, "xxxxxx")));
+    setServerRoutes(Map.of(TICKETS_URL, mockResponse(200, "xxxxxx")));
 
     // When
     CompletableFuture<?> result = repository.listTickets(USER_ID);

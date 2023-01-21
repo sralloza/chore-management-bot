@@ -17,6 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class UsersRepositoryTest extends TestRepositoryBase {
+  public static final String USERS_URL = "/api/v1/users";
   private UsersRepositoryNonCached repository;
 
   @BeforeEach
@@ -28,7 +29,7 @@ public class UsersRepositoryTest extends TestRepositoryBase {
   @Test
   public void listUsersEmpty() throws ExecutionException, InterruptedException {
     // Given
-    setServerRoutes(Map.of("/api/v1/users", mockResponse(200, "[]")));
+    setServerRoutes(Map.of(USERS_URL, mockResponse(200, "[]")));
 
     // When
     List<User> result = repository.listUsers().get();
@@ -40,7 +41,7 @@ public class UsersRepositoryTest extends TestRepositoryBase {
   @Test
   public void listUsersNotEmpty() throws ExecutionException, InterruptedException {
     // Given
-    setServerRoutes(Map.of("/api/v1/users", mockResponse(200,
+    setServerRoutes(Map.of(USERS_URL, mockResponse(200,
       "[{\"username\": \"username\", \"id\": \"user-id\", \"api_key\": \"api-key\"}]")));
 
     // When
@@ -52,9 +53,9 @@ public class UsersRepositoryTest extends TestRepositoryBase {
   }
 
   @Test
-  public void server403() {
+  public void listUsers403() {
     // Given
-    setServerRoutes(Map.of("/api/v1/users", mockResponse(403, "{\"detail\": \"Admin access required\"}")));
+    setServerRoutes(Map.of(USERS_URL, mockResponse(403, "{\"detail\": \"Admin access required\"}")));
 
     // When
     CompletableFuture<?> result = repository.listUsers();
@@ -67,9 +68,9 @@ public class UsersRepositoryTest extends TestRepositoryBase {
   }
 
   @Test
-  public void serverInvalidData() {
+  public void listUsersInvalidData() {
     // Given
-    setServerRoutes(Map.of("/api/v1/users", mockResponse(200, "xxxxxx")));
+    setServerRoutes(Map.of(USERS_URL, mockResponse(200, "xxxxxx")));
 
     // When
     CompletableFuture<?> result = repository.listUsers();

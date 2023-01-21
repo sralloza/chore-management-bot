@@ -17,6 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class ChoreTypesRepositoryTest extends TestRepositoryBase {
+  private static final String CHORE_TYPES_URL = "/api/v1/chore-types";
   private ChoreTypesRepositoryNonCached repository;
 
   @BeforeEach
@@ -28,7 +29,7 @@ public class ChoreTypesRepositoryTest extends TestRepositoryBase {
   @Test
   public void listChoreTypesEmpty() throws ExecutionException, InterruptedException {
     // Given
-    setServerRoutes(Map.of("/api/v1/chore-types", mockResponse(200, "[]")));
+    setServerRoutes(Map.of(CHORE_TYPES_URL, mockResponse(200, "[]")));
 
     // When
     List<ChoreType> result = repository.listChoreTypes().get();
@@ -40,7 +41,7 @@ public class ChoreTypesRepositoryTest extends TestRepositoryBase {
   @Test
   public void listChoreTypesNotEmpty() throws ExecutionException, InterruptedException {
     // Given
-    setServerRoutes(Map.of("/api/v1/chore-types", mockResponse(200,
+    setServerRoutes(Map.of(CHORE_TYPES_URL, mockResponse(200,
       "[{\"id\": \"kitchen\", \"name\": \"Kitchen\", \"description\": \"Clean the kitchen\"}]")));
 
     // When
@@ -52,9 +53,9 @@ public class ChoreTypesRepositoryTest extends TestRepositoryBase {
   }
 
   @Test
-  public void server403() {
+  public void listChoreTypes403() {
     // Given
-    setServerRoutes(Map.of("/api/v1/chore-types", mockResponse(403, "{\"detail\": \"Admin access required\"}")));
+    setServerRoutes(Map.of(CHORE_TYPES_URL, mockResponse(403, "{\"detail\": \"Admin access required\"}")));
 
     // When
     CompletableFuture<?> result = repository.listChoreTypes();
@@ -67,9 +68,9 @@ public class ChoreTypesRepositoryTest extends TestRepositoryBase {
   }
 
   @Test
-  public void serverInvalidData() {
+  public void listChoreTypesInvalidResponse() {
     // Given
-    setServerRoutes(Map.of("/api/v1/chore-types", mockResponse(200, "xxxxxx")));
+    setServerRoutes(Map.of(CHORE_TYPES_URL, mockResponse(200, "xxxxxx")));
 
     // When
     CompletableFuture<?> result = repository.listChoreTypes();

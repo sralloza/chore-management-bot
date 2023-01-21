@@ -12,7 +12,7 @@ public class Chore {
   @JsonProperty("chore_type_id")
   private String choreTypeId;
   @JsonProperty("user_id")
-  private Long userId;
+  private String userId;
   @JsonProperty("week_id")
   private String weekId;
   private Boolean done;
