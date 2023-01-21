@@ -16,7 +16,7 @@ import services.latex.LatexCacheableModule;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
-public class Module extends AbstractModule {
+public class MainModule extends AbstractModule {
   @Override
   protected void configure() {
     install(new LatexCacheableModule());

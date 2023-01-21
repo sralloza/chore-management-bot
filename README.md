@@ -20,7 +20,6 @@ Configuration is done by setting environment variables.
 
 - ***ADMIN_API_KEY***: API key with admin privileges of the Chore Management API.
 - ***API_BASE_URL***: base url where the Chore Management API is deployed.
-- ***API_HTTP2***: Enable HTTP/2. Defaults to `true`.
 - ***CHORES_CACHE_ENABLED***: Enable or disable the chores cache. It manages the `listWeeklyChores` and the `listChores` endpoints. Defaults to `true`.
 - ***CHORE_TYPES_CACHE_ENABLED***: Enable or disable the users cache. If is disabled, for every message sent to the bot a GET request will be sent to the API. Defaults to `true`.
 - ***LATEX_CACHE_ENABLED***: Enable the cache for latex generated images. Defaults to `true`.

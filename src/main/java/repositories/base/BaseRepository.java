@@ -7,14 +7,15 @@ import com.google.inject.Singleton;
 import com.typesafe.config.Config;
 import exceptions.APIException;
 import lombok.extern.slf4j.Slf4j;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
+import okhttp3.ResponseBody;
 
 import javax.annotation.Nullable;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.util.HashMap;
-import java.util.Map;
+import java.io.IOException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -26,68 +27,53 @@ import java.util.concurrent.Executor;
 public class BaseRepository {
   private static final Set<Integer> VALID_STATUS_CODES = Set.of(200, 201, 204);
   private final String baseURL;
-  private final boolean http2;
   protected final Executor executor;
   protected final ObjectMapper objectMapper;
+  private final MediaType mediaType = MediaType.get("application/json");
+  private final OkHttpClient httpClient;
 
   public BaseRepository(Config config, Executor executor) {
     this.baseURL = config.getString("api.baseURL");
-    this.http2 = config.getBoolean("api.http2");
     this.executor = executor;
     this.objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
-  }
-
-  private HttpClient.Version getHttpClientVersion() {
-    return http2 ? HttpClient.Version.HTTP_2 : HttpClient.Version.HTTP_1_1;
+    this.httpClient = new OkHttpClient();
   }
 
   protected <T> CompletableFuture<T> sendRequest(String method, String path, Class<T> clazz,
                                                  @Nullable String token, @Nullable String payload) {
-    HttpClient client = HttpClient.newHttpClient();
-    HttpClient.Version version = getHttpClientVersion();
-    log.debug("Using {}", version);
 
-    HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
-      .version(version)
-      .uri(URI.create(baseURL + path))
-      .header("Content-Type", "application/json")
-      .header("Accept-Language", "es")
-      .header("User-Agent", "ChoreManagementBot/1.0");
+    RequestBody body = payload != null ? RequestBody.create(payload, mediaType) : RequestBody.create("", null);
+    Request.Builder requestBuilder = new Request.Builder()
+      .url(baseURL + path)
+      .header("User-Agent", "ChoreManagement/1.0")
+      .header("Accept-Language", "es");
 
-    Map<String, String> headers = new HashMap<>();
     if (Objects.nonNull(token)) {
-      headers.put("x-token", token);
+      requestBuilder = requestBuilder.header("x-token", token);
     }
-
-    for (Map.Entry<String, String> header : headers.entrySet()) {
-      requestBuilder = requestBuilder.header(header.getKey(), header.getValue());
-    }
-
-    HttpRequest.BodyPublisher bodyPublisher = Optional.ofNullable(payload)
-      .map(HttpRequest.BodyPublishers::ofString)
-      .orElse(HttpRequest.BodyPublishers.noBody());
 
     switch (method) {
       case "POST":
-        requestBuilder = requestBuilder.POST(bodyPublisher);
+        requestBuilder = requestBuilder.post(body);
         break;
       case "PUT":
-        requestBuilder = requestBuilder.PUT(bodyPublisher);
+        requestBuilder = requestBuilder.put(body);
         break;
       case "DELETE":
-        requestBuilder = requestBuilder.DELETE();
+        requestBuilder = requestBuilder.delete();
         break;
       default:
-        requestBuilder = requestBuilder.GET();
+        requestBuilder = requestBuilder.get();
         break;
     }
 
-    HttpRequest request = requestBuilder.build();
-    log.debug("Request URL: " + request.uri());
-    log.debug("Request headers: " + request.headers());
+    Request request = requestBuilder.build();
+    log.debug("Request URL: " + request.url());
+    log.debug("Request headers: " + String.join(", ", request.headers().toString().split("\n")));
 
-    return client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
-      .thenApplyAsync(response -> getAndProcessBody(response, clazz), executor);
+    OkHttpResponseFuture callback = new OkHttpResponseFuture();
+    httpClient.newCall(request).enqueue(callback);
+    return callback.future.thenApply(response -> getAndProcessBody(response, clazz));
   }
 
   protected <T> T fromJson(String body, Class<T> clazz) {
@@ -112,21 +98,39 @@ public class BaseRepository {
     }
   }
 
-  private <T> T getAndProcessBody(HttpResponse<String> response, Class<T> clazz) {
-    log.debug("Response code: " + response.statusCode());
-    log.debug("Response headers: " + response.headers());
-    log.debug("Response body: " + response.body());
+  private Optional<String> processBody(@Nullable ResponseBody body) {
+    if (body == null) {
+      return Optional.empty();
+    }
+    try {
+      return Optional.of(body.string());
+    } catch (IOException e) {
+      log.error("Error processing body", e);
+      throw new RuntimeException(e);
+    }
+  }
 
-    if (!VALID_STATUS_CODES.contains(response.statusCode())) {
-      var exception = new APIException(response);
+  private <T> T getAndProcessBody(Response response, Class<T> clazz) {
+    log.debug("Response code: " + response.code());
+    log.debug("Response headers: " + String.join(", ", response.headers().toString().split("\n")));
+
+    Optional<String> bodyString = processBody(response.body());
+    log.debug("Response body: " + bodyString.orElse(null));
+
+    if (!VALID_STATUS_CODES.contains(response.code())) {
+      var exception = APIException.from(response, bodyString.orElse(null));
       log.error("Error calling API", exception);
       throw exception;
     }
 
+    if (bodyString.isEmpty()) {
+      return null;
+    }
+
     try {
-      return fromJson(response.body(), clazz);
+      return fromJson(bodyString.get(), clazz);
     } catch (Exception e) {
-      throw new APIException(response, e);
+      throw APIException.from(response, bodyString.orElse(null), e);
     }
   }
 }
