@@ -1,4 +1,3 @@
-import exceptions.APIException;
 import models.Chore;
 import models.WeeklyChore;
 import models.WeeklyChores;
@@ -18,7 +17,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
@@ -93,33 +91,12 @@ public class ChoresRepositoryTest extends TestRepositoryBase {
 
   @Test
   public void listChores403() {
-    // Given
-    setServerRoutes(Map.of(CHORES_URL, mockResponse(403, "{\"detail\": \"Admin access required\"}")));
-
-    // When
-    CompletableFuture<?> result = repository.listChores(USER_ID);
-
-    // Then
-    ExecutionException exception = assertThrows(ExecutionException.class, result::get);
-    assertTrue(exception.getCause() instanceof APIException);
-    APIException cause = (APIException) exception.getCause();
-    assertEquals("Admin access required", cause.getMsg());
+    testServer403Response(CHORES_URL, () -> repository.listChores(USER_ID));
   }
 
   @Test
   public void listChoresInvalidResponse() {
-    // Given
-    setServerRoutes(Map.of(CHORES_URL, mockResponse(200, "xxxxxx")));
-
-    // When
-    CompletableFuture<?> result = repository.listChores(USER_ID);
-
-    // Then
-    ExecutionException exception = assertThrows(ExecutionException.class, result::get);
-    assertTrue(exception.getCause() instanceof APIException);
-    APIException cause = (APIException) exception.getCause();
-    assertNull(cause.getMsg());
-    assertTrue(cause.getMessage().contains("Unrecognized token 'xxxxxx'"));
+    listServer200UnexpectedData(CHORES_URL, () -> repository.listChores(USER_ID));
   }
 
   @Test
@@ -146,12 +123,12 @@ public class ChoresRepositoryTest extends TestRepositoryBase {
 
     // Then
     var expected = List.of(new WeeklyChores()
-        .setChores(List.of(new WeeklyChore()
-          .setChoreTypeId("chore-type-id")
-          .setDone(false)
-          .setAssignedIds(List.of("user-id"))
-          .setAssignedUsernames(List.of("user-name"))))
-        .setWeekId("2023.03"));
+      .setChores(List.of(new WeeklyChore()
+        .setChoreTypeId("chore-type-id")
+        .setDone(false)
+        .setAssignedIds(List.of("user-id"))
+        .setAssignedUsernames(List.of("user-name"))))
+      .setWeekId("2023.03"));
     assertEquals(expected, result);
   }
 
@@ -171,32 +148,11 @@ public class ChoresRepositoryTest extends TestRepositoryBase {
 
   @Test
   public void listWeeklyChores403() {
-    // Given
-    setServerRoutes(Map.of(WEEKLY_CHORES_URL, mockResponse(403, "{\"detail\": \"Admin access required\"}")));
-
-    // When
-    CompletableFuture<?> result = repository.listWeeklyChores(USER_ID);
-
-    // Then
-    ExecutionException exception = assertThrows(ExecutionException.class, result::get);
-    assertTrue(exception.getCause() instanceof APIException);
-    APIException cause = (APIException) exception.getCause();
-    assertEquals("Admin access required", cause.getMsg());
+    testServer403Response(WEEKLY_CHORES_URL, () -> repository.listWeeklyChores(USER_ID));
   }
 
   @Test
   public void listWeeklyChoresInvalidResponse() {
-    // Given
-    setServerRoutes(Map.of(WEEKLY_CHORES_URL, mockResponse(200, "xxxxxx")));
-
-    // When
-    CompletableFuture<?> result = repository.listWeeklyChores(USER_ID);
-
-    // Then
-    ExecutionException exception = assertThrows(ExecutionException.class, result::get);
-    assertTrue(exception.getCause() instanceof APIException);
-    APIException cause = (APIException) exception.getCause();
-    assertNull(cause.getMsg());
-    assertTrue(cause.getMessage().contains("Unrecognized token 'xxxxxx'"));
+    listServer200UnexpectedData(WEEKLY_CHORES_URL, () -> repository.listWeeklyChores(USER_ID));
   }
 }

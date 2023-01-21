@@ -1,4 +1,3 @@
-import exceptions.APIException;
 import models.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -7,14 +6,10 @@ import repositories.users.UsersRepositoryNonCached;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class UsersRepositoryTest extends TestRepositoryBase {
   public static final String USERS_URL = "/api/v1/users";
@@ -54,32 +49,11 @@ public class UsersRepositoryTest extends TestRepositoryBase {
 
   @Test
   public void listUsers403() {
-    // Given
-    setServerRoutes(Map.of(USERS_URL, mockResponse(403, "{\"detail\": \"Admin access required\"}")));
-
-    // When
-    CompletableFuture<?> result = repository.listUsers();
-
-    // Then
-    ExecutionException exception = assertThrows(ExecutionException.class, result::get);
-    assertTrue(exception.getCause() instanceof APIException);
-    APIException cause = (APIException) exception.getCause();
-    assertEquals("Admin access required", cause.getMsg());
+    testServer403Response(USERS_URL, repository::listUsers);
   }
 
   @Test
   public void listUsersInvalidData() {
-    // Given
-    setServerRoutes(Map.of(USERS_URL, mockResponse(200, "xxxxxx")));
-
-    // When
-    CompletableFuture<?> result = repository.listUsers();
-
-    // Then
-    ExecutionException exception = assertThrows(ExecutionException.class, result::get);
-    assertTrue(exception.getCause() instanceof APIException);
-    APIException cause = (APIException) exception.getCause();
-    assertNull(cause.getMsg());
-    assertTrue(cause.getMessage().contains("Unrecognized token 'xxxxxx'"));
+    listServer200UnexpectedData(USERS_URL, repository::listUsers);
   }
 }

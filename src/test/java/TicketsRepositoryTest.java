@@ -1,4 +1,3 @@
-import exceptions.APIException;
 import models.Ticket;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,7 +14,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
@@ -88,32 +86,11 @@ public class TicketsRepositoryTest extends TestRepositoryBase {
 
   @Test
   public void listTickets403() {
-    // Given
-    setServerRoutes(Map.of(TICKETS_URL, mockResponse(403, "{\"detail\": \"Admin access required\"}")));
-
-    // When
-    CompletableFuture<?> result = repository.listTickets(USER_ID);
-
-    // Then
-    ExecutionException exception = assertThrows(ExecutionException.class, result::get);
-    assertTrue(exception.getCause() instanceof APIException);
-    APIException cause = (APIException) exception.getCause();
-    assertEquals("Admin access required", cause.getMsg());
+    testServer403Response(TICKETS_URL, () -> repository.listTickets(USER_ID));
   }
 
   @Test
   public void listTicketsInvalidData() {
-    // Given
-    setServerRoutes(Map.of(TICKETS_URL, mockResponse(200, "xxxxxx")));
-
-    // When
-    CompletableFuture<?> result = repository.listTickets(USER_ID);
-
-    // Then
-    ExecutionException exception = assertThrows(ExecutionException.class, result::get);
-    assertTrue(exception.getCause() instanceof APIException);
-    APIException cause = (APIException) exception.getCause();
-    assertNull(cause.getMsg());
-    assertTrue(cause.getMessage().contains("Unrecognized token 'xxxxxx'"));
+    listServer200UnexpectedData(TICKETS_URL, () -> repository.listTickets(USER_ID));
   }
 }

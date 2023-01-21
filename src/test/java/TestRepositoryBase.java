@@ -2,6 +2,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import exceptions.APIException;
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
@@ -14,6 +15,14 @@ import org.junit.jupiter.api.BeforeEach;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.function.Supplier;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class TestRepositoryBase {
   protected MockWebServer server;
@@ -74,5 +83,34 @@ public class TestRepositoryBase {
   protected <T> T getGuiceInstance(Class<T> targetClass) {
     Injector injector = Guice.createInjector(new MainModule());
     return injector.getInstance(targetClass);
+  }
+
+  protected void testServer403Response(String url, Supplier<CompletableFuture<?>> callable) {
+    // Given
+    setServerRoutes(Map.of(url, mockResponse(403, "{\"detail\": \"Admin access required\"}")));
+
+    // When
+    CompletableFuture<?> result = callable.get();
+
+    // Then
+    ExecutionException exception = assertThrows(ExecutionException.class, result::get);
+    assertTrue(exception.getCause() instanceof APIException);
+    APIException cause = (APIException) exception.getCause();
+    assertEquals("Admin access required", cause.getMsg());
+  }
+
+  protected void listServer200UnexpectedData(String url, Supplier<CompletableFuture<?>> callable) {
+    // Given
+    setServerRoutes(Map.of(url, mockResponse(200, "xxxxxx")));
+
+    // When
+    CompletableFuture<?> result = callable.get();
+
+    // Then
+    ExecutionException exception = assertThrows(ExecutionException.class, result::get);
+    assertTrue(exception.getCause() instanceof APIException);
+    APIException cause = (APIException) exception.getCause();
+    assertNull(cause.getMsg());
+    assertTrue(cause.getMessage().contains("Unrecognized token 'xxxxxx'"));
   }
 }
