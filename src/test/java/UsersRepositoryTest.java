@@ -17,11 +17,10 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class UsersRepositoryTest extends TestRepositoryBase {
-  public UsersRepositoryNonCached repository;
+  private UsersRepositoryNonCached repository;
 
   @BeforeEach
-  public void setup() throws Exception {
-    setupBase();
+  public void setup() {
     setConfig(new HashMap<>());
     repository = new UsersRepositoryNonCached(config, getGuiceInstance(Executor.class));
   }

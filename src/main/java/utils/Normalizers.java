@@ -35,7 +35,7 @@ public class Normalizers {
       List<String> row = new ArrayList<>();
       row.add(user);
       for (Ticket ticket : tickets) {
-        row.add(ticket.getTicketsByUserName().get(user));
+        row.add(ticket.getTicketsByUserName().get(user).toString());
       }
       lines.add(row);
     }

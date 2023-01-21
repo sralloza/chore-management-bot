@@ -17,11 +17,10 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class ChoreTypesRepositoryTest extends TestRepositoryBase {
-  public ChoreTypesRepositoryNonCached repository;
+  private ChoreTypesRepositoryNonCached repository;
 
   @BeforeEach
-  public void setup() throws Exception {
-    setupBase();
+  public void setup() {
     setConfig(new HashMap<>());
     repository = new ChoreTypesRepositoryNonCached(config, getGuiceInstance(Executor.class));
   }
@@ -39,7 +38,7 @@ public class ChoreTypesRepositoryTest extends TestRepositoryBase {
   }
 
   @Test
-  public void listUsersNotEmpty() throws ExecutionException, InterruptedException {
+  public void listChoreTypesNotEmpty() throws ExecutionException, InterruptedException {
     // Given
     setServerRoutes(Map.of("/api/v1/chore-types", mockResponse(200,
       "[{\"id\": \"kitchen\", \"name\": \"Kitchen\", \"description\": \"Clean the kitchen\"}]")));
