@@ -24,7 +24,7 @@ public class SecurityImp implements Security {
         .filter(user -> user.getId().equals(userId))
         .findFirst()
         .map(User::getApiKey)
-        .orElse(null));
+        .orElseThrow(() -> new RuntimeException("User not found")));
   }
 
   public CompletableFuture<Boolean> isAuthenticated(String userId) {

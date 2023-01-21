@@ -2,9 +2,11 @@ package models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
+import lombok.experimental.Accessors;
 
 import java.util.List;
 
+@Accessors(chain = true)
 @Data
 public class WeeklyChore {
   @JsonProperty("assigned_ids")

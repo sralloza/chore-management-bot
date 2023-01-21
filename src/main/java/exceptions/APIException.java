@@ -3,13 +3,17 @@ package exceptions;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import okhttp3.Response;
+import org.jetbrains.annotations.Nullable;
 import utils.Generic;
 
-import java.net.http.HttpResponse;
+import java.util.Objects;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
 @AllArgsConstructor
+@NoArgsConstructor
 public class APIException extends RuntimeException {
   private String msg;
   private String url;
@@ -19,18 +23,35 @@ public class APIException extends RuntimeException {
   private String apiKey;
   private Exception otherException;
 
-  public APIException(HttpResponse<String> response, Exception exc) {
-    this(response);
-    this.otherException = exc;
+  public APIException(String responseMessage) {
+    super(responseMessage);
   }
 
-  public APIException(HttpResponse<String> response) {
-    super(Generic.getResponseMessage(response));
-    this.msg = Generic.getResponseMessage(response);
-    this.url = response.uri().toString();
-    this.method = response.request().method();
-    this.statusCode = response.statusCode();
-    this.xCorrelator = response.headers().firstValue("X-Correlator").orElse(null);
-    this.apiKey = response.request().headers().firstValue("x-token").orElse(null);
+  public static APIException from(Exception exc) {
+    var apiException = new APIException();
+    apiException.setOtherException(exc);
+    return apiException;
+  }
+
+  public static APIException from(Response response, String body) {
+    return APIException.from(response, body, null);
+  }
+
+  public static APIException from(Response response, String body, @Nullable Exception exc) {
+    String apiErrorMsg = Objects.isNull(exc) ? Generic.getResponseMessage(response, body) : null;
+    APIException apiException;
+    if (Objects.nonNull(apiErrorMsg)) {
+      apiException = new APIException(apiErrorMsg);
+    } else {
+      apiException = new APIException(exc.getMessage());
+    }
+    apiException.msg = apiErrorMsg;
+    apiException.url = response.request().url().toString();
+    apiException.method = response.request().method();
+    apiException.statusCode = response.code();
+    apiException.xCorrelator = response.headers().get("X-Correlator");
+    apiException.apiKey = response.request().headers().get("x-token");
+    apiException.setOtherException(exc);
+    return apiException;
   }
 }

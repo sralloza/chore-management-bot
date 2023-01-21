@@ -8,6 +8,7 @@ COPY src/ /home/gradle/src/
 
 # RUN ./gradlew build
 # RUN ./gradlew test --scan
+RUN ./gradlew clean test --console verbose
 RUN ./gradlew jar
 
 FROM sralloza/openjdk:11-jre
