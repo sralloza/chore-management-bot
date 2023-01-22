@@ -17,6 +17,8 @@ public class BotMessages {
     " información al administrador para resolver el problema\\.";
   public static final String NO_TICKETS_FOUND = "No se han encontrado tickets";
 
+  public static final String NOT_IMPLEMENTED = "Comando no implementado";
+
   public static final String WEEK_SKIPPED = "Semana saltada: %s";
   public static final String WEEK_UNSKIPPED = "Semana restaurada: %s";
 
