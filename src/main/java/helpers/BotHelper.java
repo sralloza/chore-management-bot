@@ -64,7 +64,7 @@ public class BotHelper {
     }
   }
 
-  public void deleteMessage(String chatId, Integer messageId) {
+  private void deleteMessage(String chatId, Integer messageId) {
     log.debug("Deleting message {} in chat {}", messageId, chatId);
     var message = new DeleteMessage();
     message.setMessageId(messageId);
@@ -92,7 +92,10 @@ public class BotHelper {
 
   public void removeBotQueryMessageIfExists(String chatId, QueryType type) {
     messagesService.getMessageId(chatId, type)
-      .ifPresent(messageId -> deleteMessage(chatId, messageId));
+      .ifPresent(messageId -> {
+        deleteMessage(chatId, messageId);
+        messagesService.deleteMessageId(chatId, type);
+      });
   }
 
   private void sendUnknownError(Exception e, String chatId) {
@@ -121,7 +124,10 @@ public class BotHelper {
         handleException((Exception) e, chatId, type);
       } else {
         messagesService.getMessageId(chatId, type)
-          .ifPresent(messageId -> editMessage(ctx.chatId(), messageId, messageOk));
+          .ifPresent(messageId -> {
+            editMessage(ctx.chatId(), messageId, messageOk);
+            messagesService.deleteMessageId(chatId, type);
+          });
       }
       return null;
     };

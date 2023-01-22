@@ -33,7 +33,7 @@ public class MessagesService {
     redisService.setex(key, 48 * 3600, messageId.toString());
   }
 
-  public void deleteMessageId(Long chatId, QueryType type) {
+  public void deleteMessageId(String chatId, QueryType type) {
     redisService.del(getKey(chatId, type));
   }
 
