@@ -180,6 +180,9 @@ public class ChoreManagementBot extends BaseChoreManagementBot {
       case UserMessages.UNSKIP:
         silent.forceReply(BotMessages.ASK_FOR_WEEK_TO_UNSKIP, ctx.chatId());
         break;
+      case UserMessages.TRANSFER:
+        helper.sendMessage(BotMessages.NOT_IMPLEMENTED, chatId, true);
+        break;
       default:
         helper.sendMessage(BotMessages.UNDEFINED_COMMAND, chatId, true);
         break;

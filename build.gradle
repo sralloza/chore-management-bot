@@ -4,21 +4,8 @@ plugins {
     id 'io.freefair.lombok' version '6.4.1'
 }
 
-test {
-    testLogging {
-        events 'passed', 'skipped', 'failed'
-
-        showExceptions true
-        exceptionFormat 'full'
-        showCauses true
-        showStackTraces true
-
-        showStandardStreams false
-    }
-}
-
 group 'es.sralloza'
-version '0.3.3'
+version '0.3.4'
 
 repositories {
     mavenCentral()
@@ -66,15 +53,20 @@ dependencies {
 test {
     useJUnitPlatform()
     testLogging {
+        showExceptions = true
+        exceptionFormat = 'full'
+        showCauses = true
+        showStackTraces = true
+        showStandardStreams = false
         events "passed", "skipped", "failed"
+
+        afterSuite { desc, result ->
+            if (!desc.parent) { // will match the outermost suite
+                println "Results: ${result.resultType} (${result.testCount} tests, ${result.successfulTestCount} successes, ${result.failedTestCount} failures, ${result.skippedTestCount} skipped)"
+            }
+        }
+        showStandardStreams = true
     }
-      testLogging {
-    afterSuite { desc, result ->
-      if (!desc.parent) { // will match the outermost suite
-        println "Results: ${result.resultType} (${result.testCount} tests, ${result.successfulTestCount} successes, ${result.failedTestCount} failures, ${result.skippedTestCount} skipped)"
-      }
-    }
-  }
 }
 
 compileJava.options.encoding = 'UTF-8'
