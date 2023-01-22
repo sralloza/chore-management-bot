@@ -8,8 +8,9 @@ COPY src/ /home/gradle/src/
 
 ARG TARGETARCH
 
-# XXX: Skip tests for ARMv7. Tests with MockWebServer fail on shutdown with "java.io.IOException: Gave up waiting for queue to shut down" only on ARMv7.
-RUN if [ "${TARGETARCH}" != "arm" ]; then ./gradlew clean test --console verbose; else echo "Skipping tests for ARMv7"; fi
+# XXX: Skip tests for ARMv7 and ARM64. Tests with MockWebServer fail on shutdown with "java.io.IOException: Gave up waiting for queue to shut down".
+# XXX: When developing in an ARM64 machine, the script ./up.sh will not run the tests.
+RUN if [ "${TARGETARCH}" = "amd64" ]; then ./gradlew clean test --console verbose; else echo "Skipping tests for ${TARGETARCH}"; fi
 RUN ./gradlew jar
 
 FROM sralloza/openjdk:11-jre
