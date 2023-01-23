@@ -25,3 +25,14 @@ Configuration is done by setting environment variables.
 - ***LATEX_CACHE_ENABLED***: Enable the cache for latex generated images. Defaults to `true`.
 - ***TICKETS_CACHE_ENABLED***: Enable or disable the tickets cache. Defaults to `true`.
 - ***USERS_CACHE_ENABLED***: Enable or disable the users cache. If is disabled, for every message sent to the bot a GET request will be sent to the API. Defaults to `true`.
+
+## Cache
+
+The bot uses a cache to avoid sending too many requests to the API. These are the expiration times for each cache:
+
+- **latex** (weekly chores and tickets images): 2 Weeks. Each image is saved in a different key in cache.
+- **[listUsers endpoint](https://sralloza.github.io/chore-management-api/#tag/Users/operation/listUsers)**: 4 weeks
+- **[listTickets endpoint](https://sralloza.github.io/chore-management-api/#tag/Tickets/operation/listTickets)**: 4 weeks. Any chore transfer will invalidate this cache.
+- **[listChoreTypes endpoint](https://sralloza.github.io/chore-management-api/#tag/Chore-Types/operation/listChoreTypes)**: 4 weeks.
+- **[listChores endpoint](https://sralloza.github.io/chore-management-api/#tag/Chores/operation/listChores)**: 1 week. Any chore transfer or chore completion will invalidate this cache.
+- **[listWeeklyChores endpoint](https://sralloza.github.io/chore-management-api/#tag/Weekly-Chores/operation/listWeeklyChores)**: 1 week. Any chore transfer or chore completion will invalidate this cache.
