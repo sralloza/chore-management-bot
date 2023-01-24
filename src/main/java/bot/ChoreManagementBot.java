@@ -30,6 +30,7 @@ import java.util.stream.Collectors;
 
 import static org.telegram.abilitybots.api.objects.Locality.USER;
 import static org.telegram.abilitybots.api.objects.Privacy.PUBLIC;
+import static utils.Internationalization.translateWeekId;
 
 @Slf4j
 public class ChoreManagementBot extends BaseChoreManagementBot {
@@ -86,7 +87,7 @@ public class ChoreManagementBot extends BaseChoreManagementBot {
                 helper.handleException((Exception) throwable, chatId);
                 return null;
               }
-              helper.sendMessage(String.format(BotMessages.WEEKLY_CHORES_CREATED, weekId), chatId, false);
+              helper.sendMessage(String.format(BotMessages.WEEKLY_CHORES_CREATED, result.getWeekId()), chatId, false);
               return null;
             }, executor);
         } else {
@@ -175,10 +176,10 @@ public class ChoreManagementBot extends BaseChoreManagementBot {
           .handleAsync(helper.exceptionHandler(chatId), executor);
         break;
       case UserMessages.SKIP:
-        silent.forceReply(BotMessages.ASK_FOR_WEEK_TO_SKIP, ctx.chatId());
+        helper.forceReplyWithMarkdown(BotMessages.ASK_FOR_WEEK_TO_SKIP_MD_SAFE, chatId);
         break;
       case UserMessages.UNSKIP:
-        silent.forceReply(BotMessages.ASK_FOR_WEEK_TO_UNSKIP, ctx.chatId());
+        helper.forceReplyWithMarkdown(BotMessages.ASK_FOR_WEEK_TO_UNSKIP_MD_SAFE, chatId);
         break;
       case UserMessages.TRANSFER:
         helper.sendMessage(BotMessages.NOT_IMPLEMENTED, chatId, true);
@@ -194,18 +195,14 @@ public class ChoreManagementBot extends BaseChoreManagementBot {
     var replyMsg = ctx.update().getMessage().getReplyToMessage().getText();
     var chatId = ctx.chatId().toString();
 
-    switch (replyMsg) {
-      case BotMessages.ASK_FOR_WEEK_TO_SKIP:
-        service.skipWeek(chatId, userMessage)
-          .handle(helper.replyHandler(ctx, String.format(BotMessages.WEEK_SKIPPED, userMessage)));
-        break;
-      case BotMessages.ASK_FOR_WEEK_TO_UNSKIP:
-        service.unSkipWeek(chatId, userMessage)
-          .handle(helper.replyHandler(ctx, String.format(BotMessages.WEEK_UNSKIPPED, userMessage)));
-        break;
-      default:
-        helper.sendMessage(BotMessages.UNDEFINED_COMMAND, chatId, false);
-        break;
+    if (BotMessages.ASK_FOR_WEEK_TO_SKIP_RAW.equals(replyMsg)) {
+      service.skipWeek(chatId, translateWeekId(userMessage))
+        .handle(helper.replyHandler(ctx, BotMessages.WEEK_SKIPPED));
+    } else if (BotMessages.ASK_FOR_WEEK_TO_UNSKIP_RAW.equals(replyMsg)) {
+      service.unSkipWeek(chatId, translateWeekId(userMessage))
+        .handle(helper.replyHandler(ctx, BotMessages.WEEK_UNSKIPPED));
+    } else {
+      helper.sendMessage(BotMessages.UNDEFINED_COMMAND, chatId, false);
     }
   }
 

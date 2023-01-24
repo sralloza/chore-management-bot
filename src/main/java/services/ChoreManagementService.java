@@ -4,6 +4,7 @@ import models.Chore;
 import models.ChoreType;
 import models.Ticket;
 import models.User;
+import models.WeekId;
 import models.WeeklyChores;
 
 import java.util.List;
@@ -19,9 +20,9 @@ public interface ChoreManagementService {
 
   CompletableFuture<Void> completeChore(String userId, String weekId, String choreType);
 
-  CompletableFuture<Void> skipWeek(String userId, String weekId);
+  CompletableFuture<WeekId> skipWeek(String userId, String weekId);
 
-  CompletableFuture<Void> unSkipWeek(String userId, String weekId);
+  CompletableFuture<WeekId> unSkipWeek(String userId, String weekId);
 
   CompletableFuture<List<ChoreType>> listChoreTypes();
 
