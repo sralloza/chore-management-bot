@@ -5,6 +5,7 @@ import constants.BotMessages;
 import exceptions.APIException;
 import lombok.extern.slf4j.Slf4j;
 import models.QueryType;
+import models.WeekId;
 import org.telegram.abilitybots.api.bot.AbilityBot;
 import org.telegram.abilitybots.api.objects.MessageContext;
 import org.telegram.abilitybots.api.sender.MessageSender;
@@ -14,6 +15,7 @@ import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.ForceReplyKeyboard;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import services.MessagesService;
 
@@ -44,6 +46,23 @@ public class BotHelper {
     msg.setText(msgStr);
     msg.setChatId(chatId);
     msg.setReplyMarkup(Keyboards.getMainMenuKeyboard());
+
+    try {
+      sender.execute(msg);
+    } catch (TelegramApiException e) {
+      handleException(e, chatId);
+    }
+  }
+
+  public void forceReplyWithMarkdown(String message, String chatId) {
+    SendMessage msg = new SendMessage();
+    msg.setText(message);
+    msg.setChatId(chatId);
+    ForceReplyKeyboard kb = new ForceReplyKeyboard();
+    kb.setForceReply(true);
+    kb.setSelective(true);
+    msg.setReplyMarkup(kb);
+    msg.enableMarkdownV2(true);
 
     try {
       sender.execute(msg);
@@ -133,12 +152,13 @@ public class BotHelper {
     };
   }
 
-  public BiFunction<Void, Throwable, Void> replyHandler(MessageContext ctx, String messageOk) {
+  public BiFunction<WeekId, Throwable, Void> replyHandler(MessageContext ctx, String templateOk) {
     var chatId = ctx.chatId().toString();
-    return (unused, e) -> {
+    return (weekId, e) -> {
       if (e != null) {
         handleException((Exception) e, chatId);
       } else {
+        var messageOk = String.format(templateOk, weekId.getWeekId());
         sendMessage(messageOk, chatId, false);
       }
       return null;

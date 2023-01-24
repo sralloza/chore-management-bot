@@ -6,6 +6,7 @@ import models.Chore;
 import models.ChoreType;
 import models.Ticket;
 import models.User;
+import models.WeekId;
 import models.WeeklyChores;
 import repositories.ChoreManagementRepository;
 import repositories.chores.ChoresRepository;
@@ -56,12 +57,12 @@ public class ChoreManagementServiceImp implements ChoreManagementService {
   }
 
   @Override
-  public CompletableFuture<Void> skipWeek(String userId, String weekId) {
+  public CompletableFuture<WeekId> skipWeek(String userId, String weekId) {
     return repository.skipWeek(userId, weekId);
   }
 
   @Override
-  public CompletableFuture<Void> unSkipWeek(String userId, String weekId) {
+  public CompletableFuture<WeekId> unSkipWeek(String userId, String weekId) {
     return repository.unSkipWeek(userId, weekId);
   }
 

@@ -2,6 +2,7 @@ package repositories;
 
 import com.google.inject.Inject;
 import com.typesafe.config.Config;
+import models.WeekId;
 import repositories.base.BaseNonAdminRepository;
 import security.Security;
 
@@ -14,11 +15,11 @@ public class ChoreManagementRepositoryImp extends BaseNonAdminRepository impleme
     super(config, security, executor);
   }
 
-  public CompletableFuture<Void> skipWeek(String userId, String weekId) {
-    return sendPostRequest("/api/v1/users/me/deactivate/" + weekId, null, userId);
+  public CompletableFuture<WeekId> skipWeek(String userId, String weekId) {
+    return sendPostRequest("/api/v1/users/me/deactivate/" + weekId, WeekId.class, userId);
   }
 
-  public CompletableFuture<Void> unSkipWeek(String userId, String weekId) {
-    return sendPostRequest("/api/v1/users/me/reactivate/" + weekId, null, userId);
+  public CompletableFuture<WeekId> unSkipWeek(String userId, String weekId) {
+    return sendPostRequest("/api/v1/users/me/reactivate/" + weekId, WeekId.class, userId);
   }
 }

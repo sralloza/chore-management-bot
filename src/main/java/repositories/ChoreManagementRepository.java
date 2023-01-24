@@ -1,9 +1,11 @@
 package repositories;
 
+import models.WeekId;
+
 import java.util.concurrent.CompletableFuture;
 
 public interface ChoreManagementRepository {
-  CompletableFuture<Void> skipWeek(String userId, String weekId);
+  CompletableFuture<WeekId> skipWeek(String userId, String weekId);
 
-  CompletableFuture<Void> unSkipWeek(String userId, String weekId);
+  CompletableFuture<WeekId> unSkipWeek(String userId, String weekId);
 }
