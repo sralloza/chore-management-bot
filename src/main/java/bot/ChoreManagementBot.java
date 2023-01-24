@@ -28,9 +28,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
 
-import static constants.BotMessages.ASK_FOR_WEEK_TO_SKIP;
-import static constants.BotMessages.ASK_FOR_WEEK_TO_SKIP_MD_SAFE;
-import static constants.BotMessages.ASK_FOR_WEEK_TO_SKIP_RAW;
 import static org.telegram.abilitybots.api.objects.Locality.USER;
 import static org.telegram.abilitybots.api.objects.Privacy.PUBLIC;
 import static utils.Internationalization.translateWeekId;
@@ -179,7 +176,7 @@ public class ChoreManagementBot extends BaseChoreManagementBot {
           .handleAsync(helper.exceptionHandler(chatId), executor);
         break;
       case UserMessages.SKIP:
-        helper.forceReplyWithMarkdown(ASK_FOR_WEEK_TO_SKIP_MD_SAFE, chatId);
+        helper.forceReplyWithMarkdown(BotMessages.ASK_FOR_WEEK_TO_SKIP_MD_SAFE, chatId);
         break;
       case UserMessages.UNSKIP:
         helper.forceReplyWithMarkdown(BotMessages.ASK_FOR_WEEK_TO_UNSKIP_MD_SAFE, chatId);
@@ -198,7 +195,7 @@ public class ChoreManagementBot extends BaseChoreManagementBot {
     var replyMsg = ctx.update().getMessage().getReplyToMessage().getText();
     var chatId = ctx.chatId().toString();
 
-    if (ASK_FOR_WEEK_TO_SKIP_RAW.equals(replyMsg)) {
+    if (BotMessages.ASK_FOR_WEEK_TO_SKIP_RAW.equals(replyMsg)) {
       service.skipWeek(chatId, translateWeekId(userMessage))
         .handle(helper.replyHandler(ctx, BotMessages.WEEK_SKIPPED));
     } else if (BotMessages.ASK_FOR_WEEK_TO_UNSKIP_RAW.equals(replyMsg)) {

@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 set -ueo pipefail
+
 baseURL="${1:-http://localhost:8080}"
 apiKey=$(cat .env | grep ADMIN_API_KEY | cut -d '=' -f2)
 userId=$(cat .env | grep TELEGRAM_CREATOR_ID | cut -d '=' -f2)
